@@ -5,12 +5,13 @@ from datetime import timedelta
 
 from curd.user import authenticate
 from schemas import Token
-from api.deps import get_db,getCurrentUser
+from api.deps import get_db, getCurrentUser
 from core.security import createAccessToken
 from core.config import settings
 
 
 router = APIRouter()
+
 
 @router.post("/token")
 async def login_for_access_token(
@@ -25,8 +26,6 @@ async def login_for_access_token(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect username or password",
         )
-    if user.is_verfied == 0:
-        raise HTTPException(status_code=400, detail="User is not verified")
     if user.is_active == 0:
         raise HTTPException(status_code=400, detail="Inactive User")
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -35,5 +34,3 @@ async def login_for_access_token(
     )
 
     return {"access_token": token, "token_type": "bearer"}
-
-

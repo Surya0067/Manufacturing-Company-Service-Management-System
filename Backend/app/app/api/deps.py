@@ -36,8 +36,6 @@ def getCurrentUser(db: Session = Depends(get_db), token: str = Depends(oauth2)):
     user = getUserByusername(db=db, username=token_data.sub)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if user.is_verfied == 0:
-        raise HTTPException(status_code=400, detail="User is not verified")
     if user.is_active == 0:
         raise HTTPException(status_code=400, detail="Inactive User")
     return user
