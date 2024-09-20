@@ -1,15 +1,45 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from fastapi import Body
 
 
-class UserCreate(BaseModel):
-    full_name: str
-    email: str
-    phone: str
-    type_id: int
+# Consolidated schema for user creation and update
+class UserBase(BaseModel):
+    username: str
+    full_name: Optional[str] = Body(None, description="Full name of the user")
+    email: Optional[str] = Body(None, description="Email of the user")
+    phone: Optional[str] = Body(None, description="Phone number of the user")
 
 
+class UserCreate(UserBase):
+    password: str = Body(..., description="Password for the account")
+    type_id: int = Body(
+        ..., description="1 - Admin, 2 - Service Head, 3 - Service Engineer"
+    )
+
+
+class UserUpdateBase(BaseModel):
+    username: str = Body(..., description="Username that need to be updated")
+
+
+class UserUpdateContact(UserUpdateBase):
+    phone: Optional[str] = Body(None, description="Phone number of the user")
+    email: Optional[str] = Body(None, description="Email of the user")
+
+
+class UserUpdateName(UserUpdateBase):
+    name: str = Body(..., description="Name of the empolyee")
+
+
+class UserUpdatePassword(UserUpdateBase):
+    password: str
+
+
+class UserUpdateRepportTo(UserUpdateBase):
+    report_to: str
+
+
+# Output schemas for displaying user data
 class Message(BaseModel):
     message: str
 
@@ -17,11 +47,12 @@ class Message(BaseModel):
 class UserOut(BaseModel):
     message: str
     username: str
-    password: str
 
 
-class UserDiplay(BaseModel):
-    full_name: str
-    email: str
-    phone: str
+class UserDisplay(UserBase):
     role: str
+    report_to: Optional[str] = Body(None, description="Supervisor of the user")
+
+
+class UsersDisplay(BaseModel):
+    users: List[UserDisplay]
