@@ -7,6 +7,7 @@ from api.deps import get_db, getCurrentUser
 from schemas import *
 from curd.user import *
 
+
 router = APIRouter()
 
 
@@ -76,7 +77,7 @@ async def getUsername(
             email=user.email,
             phone=user.phone,
             role=user.user_type.role,
-            report_to=user.report_to,
+            # report_to=user.report_to,
         )
     raise HTTPException(status_code=404, detail="User not found")
 
@@ -112,6 +113,22 @@ async def getUserByUserTypeID(
         if users:
             return {"users": users}
     raise HTTPException(status_code=404, detail="User doesn't have access")
+
+
+@router.get(
+    "/get-my-teammates",
+    description="Service head can see his team",
+    response_model=UserTeamMates,
+)
+async def getMyTeamates(
+    db: Session = Depends(get_db), current_user: User = Depends(getCurrentUser)
+):
+    if current_user.type_id == 3:
+        raise HTTPException(status_code=400, detail="Access declined")
+    users = getServiceHeadTeammates(db=db, userid=current_user.id)
+    if users:
+        return dict(users=users)
+    raise HTTPException(status_code=400, detail="cant able to get teammates")
 
 
 @router.patch(
@@ -197,7 +214,7 @@ async def updateUserReportTO(
 ):
     user_name = getUserByusername(db=db, username=details.username)
     if not user_name:
-        raise HTTPException(status_code=404,detail="user not found")
+        raise HTTPException(status_code=404, detail="user not found")
     if (
         current_user.type_id == 2 and user_name.type_id != 3
     ) or current_user.type_id == 3:
@@ -206,3 +223,49 @@ async def updateUserReportTO(
     if user:
         return user
     raise HTTPException(status_code=400, detail="Cant update user")
+
+
+@router.delete(
+    "/delete-user/username/{username}", description="Admin can able to disable the user"
+)
+async def deleteUser(
+    username: str = Path(..., description="username of the user to disable"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(getCurrentUser),
+):
+    user_name = getUserByusername(db=db, username=username)
+    if not user_name:
+        raise HTTPException(status_code=404, detail="user not found")
+    if (
+        current_user.type_id == 2 and user_name.type_id != 3
+    ) or current_user.type_id == 3:
+        raise HTTPException(status_code=400, detail="access declined")
+    if user_name.is_active == False:
+        raise HTTPException(status_code=400, detail="user Already disabled")
+    user = disableUser(db=db, username=username)
+    if user:
+        return user
+    raise HTTPException(status_code=400, detail="cant be disabled")
+
+
+@router.patch(
+    "/re-active-user/{username}", description="only admin can able reactive an account"
+)
+async def reactiveUser(
+    username: str = Path(..., description="username of the user to reactive"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(getCurrentUser),
+):
+    user_name = getUserByusername(db=db, username=username)
+    if not user_name:
+        raise HTTPException(status_code=404, detail="user not found")
+    if (
+        current_user.type_id == 2 and user_name.type_id != 3
+    ) or current_user.type_id == 3:
+        raise HTTPException(status_code=400, detail="access declined")
+    if user_name.is_active == True:
+        raise HTTPException(status_code=400, detail="user Already in use")
+    user = reactiveUserByUsername(db=db, username=username)
+    if user:
+        return user
+    raise HTTPException(status_code=400, detail="cant able to reactive")

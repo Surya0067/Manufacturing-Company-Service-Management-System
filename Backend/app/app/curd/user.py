@@ -66,6 +66,28 @@ def displayUserResponse(users):
     ]
 
 
+def getServiceHeadTeammates(db: Session, userid: int):
+    users = (
+        db.query(User).filter(User.report_to == userid, User.is_active == True).all()
+    )
+    if users:
+        return displayUserTeammatesResponse(users)
+    raise HTTPException(status_code=400, detail="There is no user")
+
+
+def displayUserTeammatesResponse(users):
+    return [
+        UserTeamMate(
+            username=user.username,
+            full_name=user.full_name,
+            email=user.email,
+            phone=user.phone,
+            role=user.user_type.role,
+        )
+        for user in users
+    ]
+
+
 def createUser(db: Session, user=UserCreate, user_id=int):
     if user.type_id == 1:
         count = getEmployeecount(db=db, type_id=1)
@@ -138,17 +160,39 @@ def resetPassword(db: Session, details: UserUpdatePassword):
         return dict(message="Update successfully")
     raise HTTPException(status_code=404, detail="Username not found")
 
-def updateReportto(db : Session,details : UserUpdateRepportTo):
-    user= getUserByusername(db=db,username=details.username)
-    report_to_user = getUserByusername(db=db,username=details.report_to)
+
+def updateReportto(db: Session, details: UserUpdateRepportTo):
+    user = getUserByusername(db=db, username=details.username)
+    report_to_user = getUserByusername(db=db, username=details.report_to)
     if not report_to_user:
-        raise HTTPException(status_code=404,detail="report to - user not found")
+        raise HTTPException(status_code=404, detail="report to - user not found")
     if user:
         user.report_to = report_to_user.id
         db.commit()
         db.refresh(user)
         return dict(message="Update successfully")
     raise HTTPException(status_code=404, detail="Username not found")
+
+
+def disableUser(db: Session, username: str):
+    user = getUserByusername(db=db, username=username)
+    if user:
+        user.is_active = False
+        db.commit()
+        db.refresh(user)
+        return dict(message="disabled  User")
+    raise HTTPException(status_code=404, detail="Username not found")
+
+
+def reactiveUserByUsername(db: Session, username: str):
+    user = getUserByusername(db=db, username=username)
+    if user:
+        user.is_active = True
+        db.commit()
+        db.refresh(user)
+        return dict(message="User reactived")
+    raise HTTPException(status_code=404, detail="Username not found")
+
 
 def authenticate(db: Session, username: str, password: str):
     user = db.query(User).filter(User.username == username).first()

@@ -51,8 +51,16 @@ class UserOut(BaseModel):
 
 class UserDisplay(UserBase):
     role: str
-    report_to: Optional[str] = Body(None, description="Supervisor of the user")
+    # report_to: Optional[int] = Body(None, description="Supervisor of the user")
 
 
 class UsersDisplay(BaseModel):
     users: List[UserDisplay]
+
+
+class UserTeamMate(UserBase):
+    role: str
+
+
+class UserTeamMates(BaseModel):
+    users: List[UserTeamMate]
