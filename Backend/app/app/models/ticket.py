@@ -10,6 +10,8 @@ class Ticket(Base):
     customer_id = Column(Integer, ForeignKey("customer.id"), nullable=False)
     issue_description = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, nullable=False)
+    updated_at = Column(DateTime, nullable=True)
     is_taken = Column(Boolean, default=False)
     status = Column(Boolean, default=True)
+
+    customer = relationship("Customer", back_populates="tickets")

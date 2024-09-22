@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional, Union
 from sqlalchemy.orm import Session, aliased
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 from core.security import verifyPassword, getPasswordHash
 from models import User, UserType
 from schemas import *
