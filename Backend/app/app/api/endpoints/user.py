@@ -11,7 +11,7 @@ from curd.user import *
 router = APIRouter()
 
 
-@router.post("/create-user", response_model=UserOut,description="Only admin can ")
+@router.post("/create-user", response_model=UserOut, description="Only admin can ")
 async def createNewUser(
     user_in: UserCreate,
     db: Session = Depends(get_db),

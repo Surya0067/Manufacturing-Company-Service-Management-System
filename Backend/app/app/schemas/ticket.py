@@ -3,10 +3,12 @@ from typing import Optional, List
 from fastapi import Body
 from datetime import datetime
 
+
 class TicketCreate(BaseModel):
-  customer_id : int
-  issue_description : str
-  
+    customer_id: int
+    issue_description: str
+
+
 class TicketDisplay(BaseModel):
     ticket_id: int
     customer_id: int
@@ -22,4 +24,3 @@ class TicketDisplay(BaseModel):
 
     class Config:
         orm_mode = True
-
