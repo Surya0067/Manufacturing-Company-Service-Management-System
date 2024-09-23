@@ -1,12 +1,7 @@
 from fastapi import (
     APIRouter,
-    Body,
     Depends,
     HTTPException,
-    status,
-    Form,
-    File,
-    UploadFile,
 )
 from sqlalchemy.orm import Session
 
@@ -67,3 +62,40 @@ async def getTicket(
     if ticket:
         return ticket
     raise HTTPException(status_code=404, detail="No tickets found")
+
+
+@router.patch(
+    "/edit-ticket/",
+    description="Only service head and admin can update the ticket",
+    response_model=Message,
+)
+async def updateTicket(
+    ticket: TicketUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(getCurrentUser),
+):
+    if current_user.type_id == 3:
+        raise HTTPException(status_code=400, detail="Access Declined")
+    ticket = ticketUpdate(db=db, ticket_update=ticket)
+    if ticket:
+        return ticket
+    raise HTTPException(status_code=400, detail="cant able to update the ticket")
+
+
+@router.delete(
+    "/delete-ticket/",
+    description="only admin and service head can cancel the tickets with proper reason",
+)
+async def deleteTicket(
+    ticket_rejection: TicketRejectionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(getCurrentUser),
+):
+    if current_user.type_id == 3:
+        raise HTTPException(status_code=400, detail="Access Declined")
+    ticket = ticketStatusChange(
+        ticket_rejection=ticket_rejection, db=db, user_id=current_user.id
+    )
+    if ticket:
+        return ticket
+    raise HTTPException(status_code=400, detail="Cant able to delete the ticket")

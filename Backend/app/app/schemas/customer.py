@@ -15,3 +15,7 @@ class CustomerCreate(CustomerBase):
 
 class CustomerUpdate(CustomerBase):
     id: int
+
+
+class CustomerDisplay(CustomerBase):
+    id: int

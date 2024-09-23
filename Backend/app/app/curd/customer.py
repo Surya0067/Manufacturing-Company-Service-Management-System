@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional, Union
 from sqlalchemy.orm import Session, aliased
 from fastapi import HTTPException, status
 from models import Customer
-from schemas import CustomerCreate, CustomerUpdate
+from schemas import CustomerCreate, CustomerUpdate, CustomerDisplay
 
 
 def getCustomerByID(db: Session, id: int):
@@ -44,3 +44,10 @@ def updateCustomer(*, db: Session, customer: CustomerUpdate):
     db.commit()
     db.refresh(customer_details)
     return dict(message="Customer details updated")
+
+
+def viewCustomer(db: Session, customer_id: int):
+    customer = getCustomerByID(db=db, id=customer_id)
+    if customer:
+        return customer
+    raise HTTPException(status_code=404, detail="Customer Not found")

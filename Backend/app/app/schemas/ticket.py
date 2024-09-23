@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 from typing import Optional, List
-from fastapi import Body
+from fastapi import Body, Path
 from datetime import datetime
 
 
 class TicketCreate(BaseModel):
     customer_id: int
-    issue_description: str
+    issue_description: Optional[str]
 
 
 class TicketDisplay(BaseModel):
@@ -23,4 +23,27 @@ class TicketDisplay(BaseModel):
     status: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+
+class TicketUpdate(BaseModel):
+    ticket_id: int = Path(..., description="ticket_id to update")
+    customer_id: int = Body(None, description="if they want to change the customer")
+    issue_description: Optional[str] = Body(
+        None, description="if they want to change issue description"
+    )
+
+
+class TicketRejectionBase(BaseModel):
+
+    ticket_id: int
+    reason: str
+
+
+class TicketRejectionCreate(TicketRejectionBase):
+    pass
+
+
+class TicketRejectionDisplay(TicketRejectionBase):
+    id: int
+    user_id: int

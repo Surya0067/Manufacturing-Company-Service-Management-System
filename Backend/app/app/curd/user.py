@@ -195,7 +195,7 @@ def reactiveUserByUsername(db: Session, username: str):
 
 
 def authenticate(db: Session, username: str, password: str):
-    user = db.query(User).filter(User.username == username).first()
+    user = getUserByusername(db=db, username=username)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if not verifyPassword(password, user.password):

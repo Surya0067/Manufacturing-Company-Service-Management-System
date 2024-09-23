@@ -19,3 +19,4 @@ class User(Base):
     is_active = Column(Boolean, default=True)
 
     user_type = relationship("UserType", back_populates="users")
+    ticket_rejected = relationship("TicketRejected", back_populates="user")

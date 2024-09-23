@@ -15,3 +15,4 @@ class Ticket(Base):
     status = Column(Boolean, default=True)
 
     customer = relationship("Customer", back_populates="tickets")
+    ticket_rejected = relationship("TicketRejected", back_populates="ticket")

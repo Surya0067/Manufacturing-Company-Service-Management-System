@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from curd.customer import createNewCustomer, updateCustomer
+from curd.customer import *
 from api.deps import get_db, getCurrentUser
 from models import User
-from schemas import Message, CustomerCreate, CustomerUpdate
+from schemas import Message, CustomerCreate, CustomerUpdate, CustomerDisplay
 
 router = APIRouter()
 
@@ -43,3 +43,20 @@ async def updateCustomerDetails(
     if user:
         return user
     raise HTTPException(status_code=400, detail="Cant edit an customer-details")
+
+
+@router.get(
+    "/view-customer-details/{customer_id}",
+    response_model=CustomerDisplay,
+    description="User can see the customer ",
+)
+async def viewCustomerDetails(
+    customer_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(getCurrentUser),
+):
+    customer = viewCustomer(db=db, customer_id=customer_id)
+    if current_user.type_id == 3:
+        raise HTTPException(status_code=400, detail="Access Declined")
+    if customer:
+        return customer
