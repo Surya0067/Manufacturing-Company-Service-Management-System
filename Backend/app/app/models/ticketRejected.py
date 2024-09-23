@@ -10,6 +10,7 @@ class TicketRejected(Base):
     ticket_id = Column(Integer, ForeignKey("ticket.id"))
     user_id = Column(Integer, ForeignKey("user.id"))
     reason = Column(String(255), nullable=False)
+    created_at = Column(DateTime, default=func.now())
 
     user = relationship("User", back_populates="ticket_rejected")
     ticket = relationship("Ticket", back_populates="ticket_rejected")

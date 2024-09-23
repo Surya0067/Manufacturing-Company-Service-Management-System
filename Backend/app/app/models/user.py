@@ -20,3 +20,13 @@ class User(Base):
 
     user_type = relationship("UserType", back_populates="users")
     ticket_rejected = relationship("TicketRejected", back_populates="user")
+    tickets_assigned_by = relationship(
+        "TicketAssign",
+        foreign_keys="[TicketAssign.assigned_by_id]",
+        back_populates="assigned_by",
+    )
+    tickets_as_engineer = relationship(
+        "TicketAssign",
+        foreign_keys="[TicketAssign.service_engineer_id]",
+        back_populates="service_engineer",
+    )

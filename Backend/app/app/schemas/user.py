@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,EmailStr
 from typing import Optional, List
 from fastapi import Body
 
@@ -7,15 +7,19 @@ from fastapi import Body
 class UserBase(BaseModel):
     username: str
     full_name: Optional[str] = Body(None, description="Full name of the user")
-    email: Optional[str] = Body(None, description="Email of the user")
+    email: Optional[EmailStr] = Body(None, description="Email of the user")
     phone: Optional[str] = Body(None, description="Phone number of the user")
 
 
-class UserCreate(UserBase):
+class UserCreate(BaseModel):
+    full_name: str = Body(None, description="Full name of the user")
+    email: EmailStr = Body(None, description="Email of the user")
+    phone: str = Body(None, description="Phone number of the user")
     password: str = Body(..., description="Password for the account")
     type_id: int = Body(
         ..., description="1 - Admin, 2 - Service Head, 3 - Service Engineer"
     )
+    report_to : str 
 
 
 class UserUpdateBase(BaseModel):
@@ -51,7 +55,16 @@ class UserOut(BaseModel):
 
 class UserDisplay(UserBase):
     role: str
-    # report_to: Optional[int] = Body(None, description="Supervisor of the user")
+    
+class UserTeamMate(BaseModel):
+    username: str
+    full_name: str
+    email: str
+    phone: str
+    role: str
+
+    class Config:
+       from_attributes = True
 
 
 class UsersDisplay(BaseModel):

@@ -10,6 +10,7 @@ from core.config import settings
 from core import security
 from schemas.token import TokenPayload
 from curd.user import getUserByusername
+from models import User
 
 oauth2 = OAuth2PasswordBearer(tokenUrl="login/token")
 
@@ -38,4 +39,14 @@ def getCurrentUser(db: Session = Depends(get_db), token: str = Depends(oauth2)):
         raise HTTPException(status_code=404, detail="User not found")
     if user.is_active == 0:
         raise HTTPException(status_code=400, detail="Inactive User")
+    return user
+
+def adminLogin(db : Session = Depends(get_db),user : User = Depends(getCurrentUser)):
+    if not user.type_id == 1:
+        raise HTTPException(status_code=400,detail="access declined")
+    return user
+
+def serviceHeadLogin(db : Session = Depends(get_db),user : User = Depends(getCurrentUser)):
+    if not user.type_id in [1,2]:
+        raise HTTPException(status_code=400,detail="access declined")
     return user

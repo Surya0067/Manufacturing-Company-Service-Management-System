@@ -38,6 +38,22 @@ def getAllUser(db: Session):
         return displayUserResponse(users)
     raise HTTPException(status_code=400, detail="There is no user")
 
+def displayServiceHead(db : Session):
+    users = (
+        db.query(User).filter(User.type_id == 2, User.is_active == True).all()
+    )
+    if users:
+        return displayUserTeammatesResponse(users)
+    raise HTTPException(status_code=400, detail="There is no user")
+
+def displayServiceEngineer(db : Session):
+    users = (
+        db.query(User).filter(User.type_id == 3, User.is_active == True).all()
+    )
+    if users:
+        return displayUserTeammatesResponse(users)
+    raise HTTPException(status_code=400, detail="There is no user")
+
 
 def UsersByUserTypeID(db: Session, type_id: int):
     report_to_alias = aliased(User)
@@ -74,7 +90,17 @@ def getServiceHeadTeammates(db: Session, userid: int):
         return displayUserTeammatesResponse(users)
     raise HTTPException(status_code=400, detail="There is no user")
 
-
+def getServiceEngineerInHead(db:Session,service_engineer_username : str,user_id:int):
+    service_engineer = db.query(User).filter(User.username == service_engineer_username,User.report_to == user_id).first()
+    if service_engineer:
+        return UserTeamMate(
+            username=service_engineer.username,
+            full_name=service_engineer.full_name,
+            email=service_engineer.email,
+            phone=service_engineer.phone,
+            role=service_engineer.user_type.role,
+        )
+    raise HTTPException(status_code=404,detail="service engineer not found")
 def displayUserTeammatesResponse(users):
     return [
         UserTeamMate(
@@ -88,30 +114,46 @@ def displayUserTeammatesResponse(users):
     ]
 
 
-def createUser(db: Session, user=UserCreate, user_id=int):
-    if user.type_id == 1:
+def createUser(db: Session, user: UserCreate, user_id: int):
+    # Generate a unique username based on the user type
+    if user.type_id == 1:  # Admin
         count = getEmployeecount(db=db, type_id=1)
         username = f"admin{count + 1}"
-    elif user.type_id == 2:
+    elif user.type_id == 2:  # Service Head
         count = getEmployeecount(db=db, type_id=2)
-        username = f"serHed{count+1}"
-    elif user.type_id == 3:
+        username = f"serHed{count + 1}"
+    elif user.type_id == 3:  # Service Engineer
         count = getEmployeecount(db=db, type_id=3)
-        username = f"serEng{count+1}"
+        username = f"serEng{count + 1}"
     else:
         raise HTTPException(status_code=404, detail="User type not found")
+
+    report_to_user = getUserByusername(db=db, username=user.report_to)
+    if report_to_user:
+        if user.type_id == 1 and report_to_user is not None and report_to_user.type_id != 1:
+            raise HTTPException(status_code=400, detail="Admin must report to another admin or no one.")
+
+        elif user.type_id == 2 and report_to_user.type_id != 1:
+            raise HTTPException(status_code=400, detail="Service Head must report to an admin.")
+
+        elif user.type_id == 3 and report_to_user.type_id not in [1, 2]:
+             raise HTTPException(status_code=400, detail="Service Engineer must report to a Service Head or Admin.")
     new_user = User(
         full_name=user.full_name,
         username=username,
         password=getPasswordHash(password=user.password),
         email=user.email,
-        report_to=user_id,
+        report_to=report_to_user.id,
         phone=user.phone,
         type_id=user.type_id,
     )
+
     db.add(new_user)
     db.commit()
-    return dict(message="User Created", username=username)
+    db.refresh(new_user)  
+
+    return dict(message="User created successfully", username=username)
+
 
 
 def updatePassword(db: Session, old_password: str, new_password: str, user_id: int):
@@ -166,6 +208,14 @@ def updateReportto(db: Session, details: UserUpdateRepportTo):
     report_to_user = getUserByusername(db=db, username=details.report_to)
     if not report_to_user:
         raise HTTPException(status_code=404, detail="report to - user not found")
+    if user.type_id == 1 and report_to_user is not None and report_to_user.type_id != 1:
+            raise HTTPException(status_code=400, detail="Admin must report to another admin or no one.")
+
+    elif user.type_id == 2 and report_to_user.type_id != 1:
+            raise HTTPException(status_code=400, detail="Service Head must report to an admin.")
+
+    elif user.type_id == 3 and report_to_user.type_id not in [1, 2]:
+             raise HTTPException(status_code=400, detail="Service Engineer must report to a Service Head or Admin.")
     if user:
         user.report_to = report_to_user.id
         db.commit()

@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List
 from fastapi import Body, Path
-from datetime import datetime
+from datetime import datetime, date
 
 
 class TicketCreate(BaseModel):
@@ -47,3 +47,16 @@ class TicketRejectionCreate(TicketRejectionBase):
 class TicketRejectionDisplay(TicketRejectionBase):
     id: int
     user_id: int
+
+
+class TicketAssignBase(BaseModel):
+    ticket_id: int
+    service_engineer_username: str
+
+
+class TickectAssignCreate(TicketAssignBase):
+    assigned_date: date
+
+
+class TickectReAssign(TicketAssignBase):
+    assigned_date: date

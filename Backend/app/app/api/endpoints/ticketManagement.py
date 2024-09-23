@@ -6,7 +6,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from curd.ticket import *
-from api.deps import get_db, getCurrentUser
+from api.deps import get_db, getCurrentUser,serviceHeadLogin,adminLogin
 from models import User
 from schemas import *
 
@@ -20,10 +20,8 @@ router = APIRouter()
 async def createNewTicket(
     new_ticket: TicketCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
+    current_user: User = Depends(serviceHeadLogin),
 ):
-    if current_user.type_id == 3:
-        raise HTTPException(status_code=400, detail="access declined")
     ticket = createTicket(db=db, ticket=new_ticket)
     if ticket:
         return ticket
@@ -36,7 +34,7 @@ async def createNewTicket(
     response_model=list[TicketDisplay],
 )
 async def getAllTickets(
-    db: Session = Depends(get_db), current_user: User = Depends(getCurrentUser)
+    db: Session = Depends(get_db), current_user: User = Depends(serviceHeadLogin)
 ):
     if current_user.type_id == 3:
         raise HTTPException(status_code=400, detail="Access Declined")
@@ -54,10 +52,8 @@ async def getAllTickets(
 async def getTicket(
     ticket_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
+    current_user: User = Depends(serviceHeadLogin),
 ):
-    if current_user.type_id == 3:
-        raise HTTPException(status_code=400, detail="Access Declined")
     ticket = displaySpecficTicket(db=db, ticket_id=ticket_id)
     if ticket:
         return ticket
@@ -72,10 +68,8 @@ async def getTicket(
 async def updateTicket(
     ticket: TicketUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
+    current_user: User = Depends(serviceHeadLogin),
 ):
-    if current_user.type_id == 3:
-        raise HTTPException(status_code=400, detail="Access Declined")
     ticket = ticketUpdate(db=db, ticket_update=ticket)
     if ticket:
         return ticket
@@ -89,10 +83,8 @@ async def updateTicket(
 async def deleteTicket(
     ticket_rejection: TicketRejectionCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
+    current_user: User = Depends(serviceHeadLogin),
 ):
-    if current_user.type_id == 3:
-        raise HTTPException(status_code=400, detail="Access Declined")
     ticket = ticketStatusChange(
         ticket_rejection=ticket_rejection, db=db, user_id=current_user.id
     )

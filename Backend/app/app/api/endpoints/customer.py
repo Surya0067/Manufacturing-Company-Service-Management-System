@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from curd.customer import *
-from api.deps import get_db, getCurrentUser
+from api.deps import get_db, getCurrentUser,adminLogin,serviceHeadLogin
 from models import User
 from schemas import Message, CustomerCreate, CustomerUpdate, CustomerDisplay
 
@@ -17,10 +17,8 @@ router = APIRouter()
 async def createCustomer(
     user_in: CustomerCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
+    current_user: User = Depends(serviceHeadLogin),
 ):
-    if current_user.type_id == 3:
-        raise HTTPException(status_code=400, detail="Access Declined")
     user = createNewCustomer(db=db, user=user_in)
     if user:
         return user
@@ -35,10 +33,8 @@ async def createCustomer(
 async def updateCustomerDetails(
     customer: CustomerUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
+    current_user: User = Depends(serviceHeadLogin),
 ):
-    if current_user.type_id == 3:
-        raise HTTPException(status_code=400, detail="Access Declined")
     user = updateCustomer(db=db, customer=customer)
     if user:
         return user
@@ -53,7 +49,7 @@ async def updateCustomerDetails(
 async def viewCustomerDetails(
     customer_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
+    current_user: User = Depends(serviceHeadLogin),
 ):
     customer = viewCustomer(db=db, customer_id=customer_id)
     if current_user.type_id == 3:
