@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import List
 
-from api.deps import get_db, getCurrentUser,adminLogin
+from api.deps import get_db, getCurrentUser, adminLogin
 from schemas import *
 from curd.user import *
 
 
 router = APIRouter()
+
 
 @router.post("/create-user", response_model=UserOut, description="Only admin can ")
 async def createNewUser(
@@ -28,6 +29,7 @@ async def createNewUser(
         return user
     raise HTTPException(status_code=400, detail="cant create an account")
 
+
 @router.get(
     "/get-users/",
     response_model=UsersDisplay,
@@ -42,19 +44,34 @@ async def getUsers(
         if users:
             return {"users": users}
 
-@router.get("/get-all-servicehead", description="Admin can get the list of all service heads", response_model=List[UserTeamMate])
-async def getAllServiceHead(db: Session = Depends(get_db), current_user: User = Depends(adminLogin)):
+
+@router.get(
+    "/get-all-servicehead",
+    description="Admin can get the list of all service heads",
+    response_model=List[UserTeamMate],
+)
+async def getAllServiceHead(
+    db: Session = Depends(get_db), current_user: User = Depends(adminLogin)
+):
     service_head = displayServiceHead(db=db)
     if not service_head:
         raise HTTPException(status_code=404, detail="No service heads found")
     return service_head
 
-@router.get("/get-all-serviceEnginner", description="Admin can get the list of all service engineer", response_model=List[UserTeamMate])
-async def getAllServiceEngineer(db: Session = Depends(get_db), current_user: User = Depends(adminLogin)):
+
+@router.get(
+    "/get-all-serviceEnginner",
+    description="Admin can get the list of all service engineer",
+    response_model=List[UserTeamMate],
+)
+async def getAllServiceEngineer(
+    db: Session = Depends(get_db), current_user: User = Depends(adminLogin)
+):
     service_engineer = displayServiceEngineer(db=db)
     if not service_engineer:
         raise HTTPException(status_code=404, detail="No service engineer found")
     return service_engineer
+
 
 @router.get(
     "/get-users/type-id/{type_id}",
@@ -68,7 +85,8 @@ async def getUserByUserTypeID(
 ):
     users = UsersByUserTypeID(db=db, type_id=type_id)
     if users:
-            return {"users": users}
+        return {"users": users}
+
 
 @router.get(
     "/get-user/username/{username}",
@@ -91,7 +109,6 @@ async def getUsername(
             # report_to=user.report_to,
         )
     raise HTTPException(status_code=404, detail="User not found")
-
 
 
 @router.patch(

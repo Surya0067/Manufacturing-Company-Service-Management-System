@@ -41,12 +41,16 @@ def getCurrentUser(db: Session = Depends(get_db), token: str = Depends(oauth2)):
         raise HTTPException(status_code=400, detail="Inactive User")
     return user
 
-def adminLogin(db : Session = Depends(get_db),user : User = Depends(getCurrentUser)):
+
+def adminLogin(db: Session = Depends(get_db), user: User = Depends(getCurrentUser)):
     if not user.type_id == 1:
-        raise HTTPException(status_code=400,detail="access declined")
+        raise HTTPException(status_code=400, detail="access declined")
     return user
 
-def serviceHeadLogin(db : Session = Depends(get_db),user : User = Depends(getCurrentUser)):
-    if not user.type_id in [1,2]:
-        raise HTTPException(status_code=400,detail="access declined")
+
+def serviceHeadLogin(
+    db: Session = Depends(get_db), user: User = Depends(getCurrentUser)
+):
+    if not user.type_id in [1, 2]:
+        raise HTTPException(status_code=400, detail="access declined")
     return user

@@ -1,4 +1,4 @@
-from pydantic import BaseModel,EmailStr
+from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from fastapi import Body
 
@@ -19,7 +19,7 @@ class UserCreate(BaseModel):
     type_id: int = Body(
         ..., description="1 - Admin, 2 - Service Head, 3 - Service Engineer"
     )
-    report_to : str 
+    report_to: str
 
 
 class UserUpdateBase(BaseModel):
@@ -55,7 +55,8 @@ class UserOut(BaseModel):
 
 class UserDisplay(UserBase):
     role: str
-    
+
+
 class UserTeamMate(BaseModel):
     username: str
     full_name: str
@@ -64,7 +65,7 @@ class UserTeamMate(BaseModel):
     role: str
 
     class Config:
-       from_attributes = True
+        from_attributes = True
 
 
 class UsersDisplay(BaseModel):

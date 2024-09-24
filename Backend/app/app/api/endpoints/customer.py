@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from curd.customer import *
-from api.deps import get_db, getCurrentUser,adminLogin,serviceHeadLogin
+from api.deps import get_db, getCurrentUser, adminLogin, serviceHeadLogin
 from models import User
 from schemas import Message, CustomerCreate, CustomerUpdate, CustomerDisplay
 

@@ -3,15 +3,12 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import List
 
-from api.deps import get_db, getCurrentUser,serviceHeadLogin
+from api.deps import get_db, getCurrentUser, serviceHeadLogin
 from schemas import *
 from curd.user import *
 
 
 router = APIRouter()
-
-
-
 
 
 @router.patch(
@@ -39,6 +36,7 @@ async def changePassword(
         return password
     raise HTTPException(status_code=400, detail="Cant update password")
 
+
 @router.get(
     "/get-my-teammates",
     description="Service head can see his team",
@@ -54,14 +52,22 @@ async def getMyTeamates(
         return dict(users=users)
     raise HTTPException(status_code=400, detail="cant able to get teammates")
 
+
 @router.get("/get-service-engineer/")
 async def getServiceEngneer(
-    service_engineer_username: str ,db: Session = Depends(get_db), current_user: User = Depends(serviceHeadLogin)
+    service_engineer_username: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(serviceHeadLogin),
 ):
-    users = getServiceEngineerInHead(db=db, service_engineer_username=service_engineer_username,user_id=current_user.id)
+    users = getServiceEngineerInHead(
+        db=db,
+        service_engineer_username=service_engineer_username,
+        user_id=current_user.id,
+    )
     if users:
         return dict(users=users)
     raise HTTPException(status_code=400, detail="cant able to get teammates")
+
 
 @router.patch(
     "/update-userdetails/contact",

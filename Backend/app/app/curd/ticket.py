@@ -193,4 +193,3 @@ def reassigningTicket(db: Session, assgin_by: int, resign: TickectReAssign):
         status_code=400,
         detail=f"User dont have permission to assign task to {resign.service_engineer_username}",
     )
-
