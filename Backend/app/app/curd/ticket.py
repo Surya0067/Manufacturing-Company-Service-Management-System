@@ -43,6 +43,7 @@ def get_and_validate_service_engineer(db: Session, username: str, current_user: 
 
     return service_engineer
 
+
 # def check_ticket_already_assigned(
 #     db: Session, ticket_id: int, current_user: User, reassign=False
 # ):
@@ -84,8 +85,13 @@ def check_ticket_already_assigned(
     # If we are reassigning, check the ownership
     if reassign:
         # If current user is not the service head who assigned it, check if it's released
-        if current_user.type_id != 1 and db_ticket.service_engineer.report_to != current_user.id:
-            raise HTTPException(status_code=400, detail="This ticket owner is another service head")
+        if (
+            current_user.type_id != 1
+            and db_ticket.service_engineer.report_to != current_user.id
+        ):
+            raise HTTPException(
+                status_code=400, detail="This ticket owner is another service head"
+            )
         return db_ticket
 
     # If the ticket is assigned and we are not reassigning, enforce ownership
@@ -93,8 +99,6 @@ def check_ticket_already_assigned(
         raise HTTPException(status_code=400, detail="Ticket has already been assigned")
 
     return db_ticket
-
-
 
 
 def createTicket(db: Session, ticket: TicketCreate):
@@ -244,12 +248,13 @@ def historyOfAssigningTicket(db: Session, ticket_id: int):
         return tickets
     raise HTTPException(status_code=404, detail="there is no ticket")
 
+
 def cancellingTickeAssign(db: Session, ticket_id: int):
     db_assign = getTicketAssignedByTicketID(db=db, ticket_id=ticket_id)
     db_ticket = getTicketByID(db=db, id=ticket_id)
     if db_assign:
-        db_assign.status = "cancelled" 
-        db_ticket.is_taken = False 
+        db_assign.status = "released"
+        db_ticket.is_taken = False
         db.commit()
         db.refresh(db_assign)
         return dict(message="Ticket has been released")

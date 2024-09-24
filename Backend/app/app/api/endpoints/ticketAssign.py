@@ -68,6 +68,7 @@ router = APIRouter()
 
 #     return ticket_reassigned
 
+
 @router.post(
     "/ticket",
     description="Service head and admin can assign the ticket to the service engineer",
@@ -81,7 +82,9 @@ async def ticketAssigning(
     ticket = get_and_validate_ticket(db=db, ticket_id=ticket_assign.ticket_id)
 
     # Check if the ticket can be assigned (it should be released)
-    check_ticket_already_assigned(db=db, ticket_id=ticket_assign.ticket_id, current_user=current_user)
+    check_ticket_already_assigned(
+        db=db, ticket_id=ticket_assign.ticket_id, current_user=current_user
+    )
 
     service_engineer = get_and_validate_service_engineer(
         db=db,
@@ -94,23 +97,14 @@ async def ticketAssigning(
     )
     return ticket
 
-@router.post(
-    "/ticket-reassign",
-    description="Service head and admin can reassign the ticket to the service engineer",
-    response_model=Message,
-)
-@router.post(
-    "/ticket-reassign",
-    description="Service head and admin can reassign the ticket to the service engineer",
-    response_model=Message,
-)
+
 @router.post(
     "/ticket-reassign",
     description="Service head and admin can reassign the ticket to the service engineer",
     response_model=Message,
 )
 async def ticketReAssigning(
-    ticket_assign: TickectAssignCreate,
+    ticket_assign: TickectReAssign,
     db: Session = Depends(get_db),
     current_user: User = Depends(serviceHeadLogin),
 ):
@@ -123,6 +117,8 @@ async def ticketReAssigning(
         current_user=current_user,
         reassign=True,  # Allow reassigning
     )
+    if db_ticket is None:
+        raise HTTPException(status_code=404, detail="Ticket not found or not assigned")
 
     service_engineer = get_and_validate_service_engineer(
         db=db,
@@ -131,17 +127,20 @@ async def ticketReAssigning(
     )
 
     # Check if the ticket is already assigned and is not cancelled
-    if db_ticket.status == "cancelled":
-        raise HTTPException(status_code=400, detail="Cancelled tickets cannot be reassigned")
+    if db_ticket.status == "released":
+        raise HTTPException(
+            status_code=400, detail="released tickets cannot be reassigned"
+        )
 
     # Allow reassignment to another service engineer
     if db_ticket.service_engineer_id != service_engineer.id:
         # If the ticket was assigned to a different service engineer, record the change
-        db_ticket.service_engineer_id = service_engineer.id
-        db.commit()
-        db.refresh(db_ticket)
-
-    return {"message": "Ticket reassigned successfully", "ticket": db_ticket}
+        reassigned = reassigningTicket(
+            db=db, assgin_by=current_user.id, resign=ticket_assign
+        )
+        if reassigned:
+            return reassigned
+    raise HTTPException(status_code=400, detail="service engineer are same")
 
 
 @router.get(
@@ -183,8 +182,13 @@ async def ticketAssignHistory(
             for ticket in tickets
         ]
 
+
 @router.delete("/release-ticket")
-async def releasedTicket(ticket_id : int,db : Session = Depends(get_db),current_user :User = Depends(serviceHeadLogin),):
+async def releasedTicket(
+    ticket_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(serviceHeadLogin),
+):
     ticket = getTicketByID(db=db, id=ticket_id)
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -198,6 +202,6 @@ async def releasedTicket(ticket_id : int,db : Session = Depends(get_db),current_
         raise HTTPException(
             status_code=400, detail="This ticket owner is another service head"
         )
-    cancelling_ticket = cancellingTickeAssign(db=db,ticket_id=ticket_id)
+    cancelling_ticket = cancellingTickeAssign(db=db, ticket_id=ticket_id)
     if cancelling_ticket:
         return cancelling_ticket
