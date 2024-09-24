@@ -8,6 +8,7 @@ from models import Ticket, TicketRejected, TicketAssign, User
 from schemas import *
 
 
+# =======================================vaildation and common==========================================================
 def getTicketByID(db: Session, id: int):
     return db.query(Ticket).filter(Ticket.id == id).first()
 
@@ -44,32 +45,6 @@ def get_and_validate_service_engineer(db: Session, username: str, current_user: 
     return service_engineer
 
 
-# def check_ticket_already_assigned(
-#     db: Session, ticket_id: int, current_user: User, reassign=False
-# ):
-#     db_ticket = getTicketAssignedByTicketID(db=db, ticket_id=ticket_id)
-#     ticket = getTicketByID(db=db, id=ticket_id)
-
-#     # If the ticket is not currently assigned
-#     if not db_ticket:
-#         if not ticket.is_taken:
-#             return None  # Ticket can be assigned as it's not taken
-#         raise HTTPException(status_code=404, detail="Ticket has not been assigned yet")
-
-#     # If we are reassigning, check the ownership
-#     if reassign:
-#         # If current user is not the service head who assigned it, check if it's released
-#         if current_user.type_id != 1 and db_ticket.service_engineer.report_to != current_user.id:
-#             raise HTTPException(status_code=400, detail="This ticket owner is another service head")
-#         return db_ticket
-
-#     # If the ticket is assigned and we are not reassigning, enforce ownership
-#     if ticket.is_taken and not reassign:
-#         raise HTTPException(status_code=400, detail="Ticket has already been assigned")
-
-#     return db_ticket
-
-
 def check_ticket_already_assigned(
     db: Session, ticket_id: int, current_user: User, reassign=False
 ):
@@ -101,6 +76,7 @@ def check_ticket_already_assigned(
     return db_ticket
 
 
+# ===========================================================ticket curd=========================================
 def createTicket(db: Session, ticket: TicketCreate):
     customer = getCustomerByID(db=db, id=ticket.customer_id)
     if not customer:
@@ -157,6 +133,16 @@ def displaySpecficTicket(db: Session, ticket_id: int):
         )
 
 
+def assignedTickets(db: Session, username: str):
+    service_engineer = getUserByusername(db=db, username=username)
+    assigned_tickets = (
+        db.query(TicketAssign)
+        .filter(TicketAssign.service_engineer_id == service_engineer.id)
+        .all()
+    )
+    return assigned_tickets
+
+
 def ticketUpdate(db: Session, ticket_update: TicketUpdate):
     ticket = getTicketByID(db=db, id=ticket_update.ticket_id)
     if ticket:
@@ -193,6 +179,7 @@ def ticketStatusChange(
     raise HTTPException(status_code=404, detail="ticket not found")
 
 
+# ==================================================assign operatons=================================================
 def assigningTickect(
     db: Session, assigned_by_id: int, ticket_details: TickectAssignCreate
 ):
@@ -249,7 +236,7 @@ def historyOfAssigningTicket(db: Session, ticket_id: int):
     raise HTTPException(status_code=404, detail="there is no ticket")
 
 
-def cancellingTickeAssign(db: Session, ticket_id: int):
+def releasingTickeAssign(db: Session, ticket_id: int):
     db_assign = getTicketAssignedByTicketID(db=db, ticket_id=ticket_id)
     db_ticket = getTicketByID(db=db, id=ticket_id)
     if db_assign:
