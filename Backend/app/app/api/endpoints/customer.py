@@ -2,9 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from curd.customer import *
+from curd.ticket import createTicket
 from api.deps import get_db, getCurrentUser, adminLogin, serviceHeadLogin
 from models import User
-from schemas import Message, CustomerCreate, CustomerUpdate, CustomerDisplay
+from schemas import (
+    Message,
+    CustomerCreate,
+    CustomerUpdate,
+    CustomerDisplay,
+    TicketCreate,
+)
 
 router = APIRouter()
 
@@ -56,3 +63,11 @@ async def viewCustomerDetails(
         raise HTTPException(status_code=400, detail="Access Declined")
     if customer:
         return customer
+
+
+@router.post("/raise-ticket", description="customer can raise the ticket")
+async def customerRaiseTicket(new_ticket: TicketCreate, db: Session = Depends(get_db)):
+    ticket = createTicket(db=db, ticket=new_ticket)
+    if ticket:
+        return ticket
+    raise HTTPException(status_code=400, detail="tickect can not be raised")

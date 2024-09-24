@@ -85,6 +85,14 @@ async def deleteTicket(
     db: Session = Depends(get_db),
     current_user: User = Depends(serviceHeadLogin),
 ):
+    db_ticket_assigned = getTicketAssignedByTicketID(
+        db=db, ticket_id=ticket_rejection.ticket_id
+    )
+    if db_ticket_assigned:
+        if not db_ticket_assigned.status == "cancelled":
+            raise HTTPException(
+                status_code=400, detail="ticket has been assigned to someone"
+            )
     ticket = ticketStatusChange(
         ticket_rejection=ticket_rejection, db=db, user_id=current_user.id
     )

@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, aliased
 from fastapi import HTTPException
 from curd.customer import getCustomerByID
 from curd.user import getUserByID, getUserByusername
-from models import Ticket, TicketRejected, TicketAssign
+from models import Ticket, TicketRejected, TicketAssign, User
 from schemas import *
 
 
@@ -16,9 +16,85 @@ def getTicketAssignedByTicketID(db: Session, ticket_id: int):
     return (
         db.query(TicketAssign)
         .filter(TicketAssign.ticket_id == ticket_id)
-        .order_by(TicketAssign.ticket_id.desc())
+        .order_by(TicketAssign.created_at.desc())
         .first()
     )
+
+
+def get_and_validate_ticket(db: Session, ticket_id: int):
+    ticket = getTicketByID(db=db, id=ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    if ticket.status == False:
+        raise HTTPException(status_code=400, detail="Ticket has been rejected")
+    return ticket
+
+
+def get_and_validate_service_engineer(db: Session, username: str, current_user: User):
+    service_engineer = getUserByusername(db=db, username=username)
+    if not service_engineer:
+        raise HTTPException(status_code=404, detail="Service engineer not found")
+    if service_engineer.type_id != 3:
+        raise HTTPException(status_code=400, detail="He is not a service engineer")
+    if not service_engineer.is_active:
+        raise HTTPException(status_code=400, detail="Service engineer is inactive")
+    if current_user.type_id != 1 and service_engineer.report_to != current_user.id:
+        raise HTTPException(status_code=400, detail="Service engineer not under you")
+
+    return service_engineer
+
+# def check_ticket_already_assigned(
+#     db: Session, ticket_id: int, current_user: User, reassign=False
+# ):
+#     db_ticket = getTicketAssignedByTicketID(db=db, ticket_id=ticket_id)
+#     ticket = getTicketByID(db=db, id=ticket_id)
+
+#     # If the ticket is not currently assigned
+#     if not db_ticket:
+#         if not ticket.is_taken:
+#             return None  # Ticket can be assigned as it's not taken
+#         raise HTTPException(status_code=404, detail="Ticket has not been assigned yet")
+
+#     # If we are reassigning, check the ownership
+#     if reassign:
+#         # If current user is not the service head who assigned it, check if it's released
+#         if current_user.type_id != 1 and db_ticket.service_engineer.report_to != current_user.id:
+#             raise HTTPException(status_code=400, detail="This ticket owner is another service head")
+#         return db_ticket
+
+#     # If the ticket is assigned and we are not reassigning, enforce ownership
+#     if ticket.is_taken and not reassign:
+#         raise HTTPException(status_code=400, detail="Ticket has already been assigned")
+
+#     return db_ticket
+
+
+def check_ticket_already_assigned(
+    db: Session, ticket_id: int, current_user: User, reassign=False
+):
+    db_ticket = getTicketAssignedByTicketID(db=db, ticket_id=ticket_id)
+    ticket = getTicketByID(db=db, id=ticket_id)
+
+    # If the ticket is not currently assigned
+    if not db_ticket:
+        if not ticket.is_taken:
+            return None  # Ticket can be assigned as it's not taken
+        raise HTTPException(status_code=404, detail="Ticket has not been assigned yet")
+
+    # If we are reassigning, check the ownership
+    if reassign:
+        # If current user is not the service head who assigned it, check if it's released
+        if current_user.type_id != 1 and db_ticket.service_engineer.report_to != current_user.id:
+            raise HTTPException(status_code=400, detail="This ticket owner is another service head")
+        return db_ticket
+
+    # If the ticket is assigned and we are not reassigning, enforce ownership
+    if ticket.is_taken and not reassign:
+        raise HTTPException(status_code=400, detail="Ticket has already been assigned")
+
+    return db_ticket
+
+
 
 
 def createTicket(db: Session, ticket: TicketCreate):
@@ -35,7 +111,6 @@ def createTicket(db: Session, ticket: TicketCreate):
 
 
 def displayTickets(db: Session):
-    # Query only the Ticket model, SQLAlchemy will automatically load the related Customer due to the relationship
     tickets = (
         db.query(Ticket).filter(Ticket.is_taken == False, Ticket.status == True).all()
     )
@@ -117,79 +192,64 @@ def ticketStatusChange(
 def assigningTickect(
     db: Session, assigned_by_id: int, ticket_details: TickectAssignCreate
 ):
-    assign = getUserByID(db=db, user_id=assigned_by_id)
     service_engineer = getUserByusername(
         db=db, username=ticket_details.service_engineer_username
     )
     ticket = getTicketByID(db=db, id=ticket_details.ticket_id)
-    db_ticket = getTicketAssignedByTicketID(db=db, ticket_id=ticket_details.ticket_id)
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-    if ticket.is_taken == True:
-        raise HTTPException(status_code=400, detail="Ticket is already taken")
-    if ticket.status == False:
-        raise HTTPException(status_code=400, detail="Ticket has been rejected")
-    if not service_engineer:
-        raise HTTPException(status_code=404, detail="service engineer not found")
-    if not service_engineer.type_id == 3:
-        raise HTTPException(status_code=400, detail="He is not a service engineer")
-    if service_engineer.is_active == True:
-        raise HTTPException(status_code=400, detail="service engineer Inactive")
-    if db_ticket:
-        raise HTTPException(status_code=400, detail="Ticket has already assigned")
-    if assign.type_id == 1 or service_engineer.report_to == assign.id:
-        db.add(
-            TicketAssign(
-                ticket_id=ticket_details.ticket_id,
-                assigned_by_id=assigned_by_id,
-                service_engineer_id=service_engineer.id,
-                assigned_date=ticket_details.assigned_date,
-            )
+    db.add(
+        TicketAssign(
+            ticket_id=ticket_details.ticket_id,
+            assigned_by_id=assigned_by_id,
+            service_engineer_id=service_engineer.id,
+            assigned_date=ticket_details.assigned_date,
         )
-        ticket.is_taken = True
-        ticket.updated_at = func.now()
-        db.commit()
-        db.refresh(ticket)
-        return dict(message="Ticket has been assigned sucessfully")
-    raise HTTPException(
-        status_code=400,
-        detail=f"User dont have permission to assign task to {ticket_details.service_engineer_username}",
     )
+    ticket.is_taken = True
+    ticket.updated_at = func.now()
+    db.commit()
+    db.refresh(ticket)
+    return dict(message="Ticket has been assigned sucessfully")
 
 
 def reassigningTicket(db: Session, assgin_by: int, resign: TickectReAssign):
     ticket = getTicketByID(db=db, id=resign.ticket_id)
-    assign = getUserByID(db=db, user_id=assgin_by)
     service_engineer = getUserByusername(
         db=db, username=resign.service_engineer_username
     )
     db_assign = getTicketAssignedByTicketID(db=db, ticket_id=resign.ticket_id)
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-    if ticket.status == False:
-        raise HTTPException(status_code=400, detail="Ticket has been rejected")
-    if not service_engineer:
-        raise HTTPException(status_code=404, detail="Service engineer not found")
-    if service_engineer.is_active == True:
-        raise HTTPException(status_code=400, detail="service engineer Inactive")
-    if not db_assign:
-        raise HTTPException(status_code=404, detail="Ticket has not assign yet")
-    if assign.type_id == 1 or service_engineer.report_to == assign.id:
-        db.add(
-            TicketAssign(
-                ticket_id=resign.ticket_id,
-                assigned_by_id=assgin_by,
-                service_engineer_id=service_engineer.id,
-                assigned_date=resign.assigned_date,
-            )
+    db.add(
+        TicketAssign(
+            ticket_id=resign.ticket_id,
+            assigned_by_id=assgin_by,
+            service_engineer_id=service_engineer.id,
+            assigned_date=resign.assigned_date,
         )
-
-        ticket.updated_at = func.now()
-        db_assign.status = "reassigned"
-        db.commit()
-        db.refresh(ticket)
-        return dict(message="Ticket has been reassigned sucessfully")
-    raise HTTPException(
-        status_code=400,
-        detail=f"User dont have permission to assign task to {resign.service_engineer_username}",
     )
+
+    ticket.updated_at = func.now()
+    db_assign.status = "reassigned"
+    db.commit()
+    db.refresh(ticket)
+    return dict(message="Ticket has been reassigned sucessfully")
+
+
+def historyOfAssigningTicket(db: Session, ticket_id: int):
+    tickets = (
+        db.query(TicketAssign)
+        .filter(TicketAssign.ticket_id == ticket_id)
+        .order_by(TicketAssign.created_at)
+        .all()
+    )
+    if tickets:
+        return tickets
+    raise HTTPException(status_code=404, detail="there is no ticket")
+
+def cancellingTickeAssign(db: Session, ticket_id: int):
+    db_assign = getTicketAssignedByTicketID(db=db, ticket_id=ticket_id)
+    db_ticket = getTicketByID(db=db, id=ticket_id)
+    if db_assign:
+        db_assign.status = "cancelled" 
+        db_ticket.is_taken = False 
+        db.commit()
+        db.refresh(db_assign)
+        return dict(message="Ticket has been released")

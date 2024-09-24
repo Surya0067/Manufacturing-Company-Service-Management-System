@@ -111,6 +111,22 @@ async def getUsername(
     raise HTTPException(status_code=404, detail="User not found")
 
 
+@router.patch("/update-userdetails/reset-password")
+async def updateUserPassword(
+    details: UserUpdatePassword,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(adminLogin),
+):
+    update_user = getUserByusername(db=db, username=details.username)
+    if update_user:
+        if update_user.is_active == False:
+            raise HTTPException(status_code=400, detail="user is inactive")
+        user = resetPassword(db=db, details=details)
+        if user:
+            return user
+    raise HTTPException(status_code=404, detail="User not found")
+
+
 @router.patch(
     "/update-userdetails/report_to",
     description="User can change their report_to,who act like a manager for Employee",

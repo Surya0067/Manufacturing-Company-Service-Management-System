@@ -60,3 +60,15 @@ class TickectAssignCreate(TicketAssignBase):
 
 class TickectReAssign(TicketAssignBase):
     assigned_date: date
+
+
+class TickectAssignHistory(BaseModel):
+    ticket_id: int
+    service_engineer: str
+    status: str
+    assigned_by: str
+    assigned_date: date
+    created_date: datetime
+
+    class Config:
+        from_attributes = True
