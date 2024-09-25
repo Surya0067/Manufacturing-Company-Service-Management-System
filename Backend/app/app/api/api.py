@@ -7,6 +7,7 @@ from .endpoints import (
     ticketAssign,
     adminLogin,
     serviceEngineer,
+    ticketProcess
 )
 
 api_router = APIRouter()
@@ -25,4 +26,7 @@ api_router.include_router(
 )
 api_router.include_router(
     ticketAssign.router, prefix="/ticket-assign", tags=["Ticket Assign"]
+)
+api_router.include_router(
+    ticketProcess.router, prefix="/ticket-process", tags=["Ticket Process"]
 )

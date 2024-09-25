@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, aliased
 from fastapi import HTTPException
 from curd.customer import getCustomerByID
 from curd.user import getUserByID, getUserByusername
-from models import Ticket, TicketRejected, TicketAssign, User
+from models import Ticket, TicketRejected, TicketAssign, User,Customer
 from schemas import *
 
 
@@ -133,14 +133,52 @@ def displaySpecficTicket(db: Session, ticket_id: int):
         )
 
 
-def assignedTickets(db: Session, username: str):
+def assignedTickets(db: Session, username: str) :
     service_engineer = getUserByusername(db=db, username=username)
     assigned_tickets = (
-        db.query(TicketAssign)
+        db.query(TicketAssign,Ticket)
+        .join(Ticket)
         .filter(TicketAssign.service_engineer_id == service_engineer.id)
+        .order_by(TicketAssign.created_at.desc())
         .all()
     )
-    return assigned_tickets
+    return DisplayAssignedTicket(assigned_tickets= assigned_tickets)
+
+def assignedTicket(db: Session, username: str, ticket_id : int):
+    service_engineer = getUserByusername(db=db, username=username)
+    assigned_tickets = (
+        db.query(TicketAssign,Ticket)
+        .join(Ticket)
+        .filter(TicketAssign.service_engineer_id == service_engineer.id,TicketAssign.ticket_id==ticket_id)
+        .order_by(TicketAssign.created_at.desc())
+        .all()
+    )
+    return DisplayAssignedTicket(assigned_tickets= assigned_tickets)
+
+
+def DisplayAssignedTicket(assigned_tickets : List):
+    response_data = [
+        AssignedTicketResponse(
+            ticket=TicketAssignDisplay(
+                ticket_id=ticket_assign.ticket_id,
+                service_engineer_username=ticket_assign.service_engineer.username,
+                status=ticket_assign.status,
+                assigned_by=ticket_assign.assigned_by.username,
+                assigned_date=ticket_assign.assigned_date,
+                created_date=ticket_assign.created_at
+            ),
+            customer=CustomerDisplay(
+                id=ticket.customer.id,
+                name=ticket.customer.name,
+                address=ticket.customer.address,
+                company_name=ticket.customer.company_name
+            )
+        )
+        for ticket_assign,ticket in assigned_tickets
+    ]
+
+    return response_data
+
 
 
 def ticketUpdate(db: Session, ticket_update: TicketUpdate):

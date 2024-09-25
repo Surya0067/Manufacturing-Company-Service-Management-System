@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from fastapi import Body, Path
 from datetime import datetime, date
-
+from .customer import CustomerDisplay
 
 class TicketCreate(BaseModel):
     customer_id: int
@@ -62,9 +62,7 @@ class TickectReAssign(TicketAssignBase):
     assigned_date: date
 
 
-class TickectAssignHistory(BaseModel):
-    ticket_id: int
-    service_engineer: str
+class TickectAssignHistory(TicketAssignBase):
     status: str
     assigned_by: str
     assigned_date: date
@@ -72,3 +70,16 @@ class TickectAssignHistory(BaseModel):
 
     class Config:
         from_attributes = True
+
+class TicketAssignDisplay(TicketAssignBase):
+    status: str
+    assigned_by: str
+    assigned_date: date
+    created_date: datetime
+
+    class Config:
+        from_attributes = True
+
+class AssignedTicketResponse(BaseModel):
+    ticket: TicketAssignDisplay
+    customer: CustomerDisplay
