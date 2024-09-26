@@ -6,7 +6,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from curd.ticket import *
-from api.deps import get_db, getCurrentUser, serviceHeadLogin, adminLogin
+from api.deps import get_db,serviceHeadLogin
 from models import User
 from schemas import *
 
@@ -23,13 +23,13 @@ async def ticketAssigning(
     db: Session = Depends(get_db),
     current_user: User = Depends(serviceHeadLogin),
 ):
-    ticket = get_and_validate_ticket(db=db, ticket_id=ticket_assign.ticket_id)
+    ticket = getAndValidateTicket(db=db, ticket_id=ticket_assign.ticket_id)
 
-    check_ticket_already_assigned(
+    checkTicketAlreadyAssigned(
         db=db, ticket_id=ticket_assign.ticket_id, current_user=current_user
     )
 
-    service_engineer = get_and_validate_service_engineer(
+    service_engineer = getAndValidateServiceEngineer(
         db=db,
         username=ticket_assign.service_engineer_username,
         current_user=current_user,
@@ -51,9 +51,9 @@ async def ticketReAssigning(
     db: Session = Depends(get_db),
     current_user: User = Depends(serviceHeadLogin),
 ):
-    ticket = get_and_validate_ticket(db=db, ticket_id=ticket_assign.ticket_id)
+    ticket = getAndValidateTicket(db=db, ticket_id=ticket_assign.ticket_id)
 
-    db_ticket = check_ticket_already_assigned(
+    db_ticket = checkTicketAlreadyAssigned(
         db=db,
         ticket_id=ticket_assign.ticket_id,
         current_user=current_user,
@@ -62,7 +62,7 @@ async def ticketReAssigning(
     if db_ticket is None:
         raise HTTPException(status_code=404, detail="Ticket not found or not assigned")
 
-    service_engineer = get_and_validate_service_engineer(
+    service_engineer = getAndValidateServiceEngineer(
         db=db,
         username=ticket_assign.service_engineer_username,
         current_user=current_user,
@@ -112,7 +112,7 @@ async def ticketAssignHistory(
         return [
             TickectAssignHistory(
                 ticket_id=ticket.ticket_id,
-                service_engineer=ticket.service_engineer.username,
+                service_engineer_username=ticket.service_engineer.username,
                 status=ticket.status,
                 assigned_by=ticket.assigned_by.username,
                 assigned_date=ticket.assigned_date,

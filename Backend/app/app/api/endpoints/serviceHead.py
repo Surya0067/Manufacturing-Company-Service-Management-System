@@ -6,7 +6,7 @@ from typing import List
 from api.deps import get_db, getCurrentUser, serviceHeadLogin
 from schemas import *
 from curd.user import *
-from curd.ticket import get_service_engineers_under_head, get_spare_part_requests
+from curd.ticket import *
 from models import *
 
 router = APIRouter()
@@ -146,25 +146,3 @@ async def updateUserPassword(
         raise HTTPException(status_code=400, detail="Service engineer not under you")
     raise HTTPException(status_code=404, detail="Service engineer not found")
 
-@router.get("/list-request-spare-parts", response_model=List[SparePartRequestResponse])
-async def list_of_requested_spare_parts(
-    db: Session = Depends(get_db), 
-    current_user: User = Depends(serviceHeadLogin)
-):
-    service_engineers = get_service_engineers_under_head(db=db, current_user=current_user)
-
-    if not service_engineers:
-        raise HTTPException(status_code=404, detail="No service engineers found under this service head")
-
-    service_engineer_ids = [se.id for se in service_engineers]
-    ticket_requests = get_spare_part_requests(db=db, service_engineer_ids=service_engineer_ids)
-
-    if not ticket_requests:
-        raise HTTPException(status_code=404, detail="No spare part requests found for service engineers under this service head")
-
-    result = [
-        SparePartRequestResponse(ticket_id=ticket_id, service_engineer_username=username)
-        for ticket_id, service_engineer_id, username in ticket_requests
-    ]
-
-    return result

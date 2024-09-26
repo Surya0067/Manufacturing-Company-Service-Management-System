@@ -12,6 +12,7 @@ class SpareParts(Base):
   unit_price = Column(Integer,nullable=True)
   requested_at = Column(DateTime,default=func.now())
   status = Column(String(50),default="pending")
+  status_time = Column(DateTime,default=func.now())
   issued_at = Column(DateTime,nullable=True)
   issued_by = Column(Integer,ForeignKey("user.id"),nullable=True)
 

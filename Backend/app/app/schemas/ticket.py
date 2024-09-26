@@ -106,12 +106,28 @@ class TicketProcessUpdate(TicketProcessBase):
     spare_parts_required: Optional[bool] = Field(default=None,description="1 for spare part needed, 0 for spare paer dont needed")
 
 class SparePartBase(BaseModel):
-    ticket_id : int
-    
+    ticket_id: int
 
 class SparePartUpdate(BaseModel):
-    part_name : str
-    quantity : float
+    part_name: str
+    quantity: float
 
 class SparePartRequestResponse(SparePartBase):
     service_engineer_username: str
+
+class SparePartResponse(BaseModel):
+    id: int
+    part_name: str
+    quantity: float
+    status: str
+
+    class Config:
+        orm_mode = True
+
+class SparePartsBulkActionResponse(BaseModel):
+    message: str
+    approved_parts: list[int]
+    rejected_parts: list[int]
+
+class TicketProcessChangeStatus(TicketProcessBase):
+    status : str
