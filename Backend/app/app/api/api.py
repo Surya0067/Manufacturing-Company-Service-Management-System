@@ -7,7 +7,7 @@ from .endpoints import (
     ticketAssign,
     adminLogin,
     serviceEngineer,
-    ticketProcess
+    ticketProcess,
 )
 
 api_router = APIRouter()

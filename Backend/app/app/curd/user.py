@@ -58,7 +58,7 @@ def UsersByUserTypeID(db: Session, type_id: int):
     users = (
         db.query(User, report_to_alias.username.label("report_to_username"))
         .outerjoin(report_to_alias, User.report_to == report_to_alias.id)
-        .filter(User.type_id == type_id)  # Correct filter condition
+        .filter(User.type_id == type_id)
         .all()
     )
     if users:

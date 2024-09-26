@@ -1,8 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
 from fastapi import Body, Path
 from datetime import datetime, date
 from .customer import CustomerDisplay
+
 
 class TicketCreate(BaseModel):
     customer_id: int
@@ -71,15 +72,46 @@ class TickectAssignHistory(TicketAssignBase):
     class Config:
         from_attributes = True
 
+
 class TicketAssignDisplay(TicketAssignBase):
     status: str
     assigned_by: str
+    issue_description: str
     assigned_date: date
     created_date: datetime
 
     class Config:
         from_attributes = True
 
+
 class AssignedTicketResponse(BaseModel):
     ticket: TicketAssignDisplay
     customer: CustomerDisplay
+
+
+class TicketProcessBase(BaseModel):
+    ticket_id: int
+
+
+class TicketprocessCreate(TicketProcessBase):
+    problem_description : str =Field(...,description='Problem satement that service engineer found')
+    priority: str = Field(...,description="priority must be low,medium,high")
+    excepted_complete_date: datetime = Field(...,description="date that service engineer expect to complete")
+    spare_parts_required: bool = Field(...,description="1 for spare part needed, 0 for spare paer dont needed")
+
+class TicketProcessUpdate(TicketProcessBase):
+    problem_description : Optional[str] = Field(default=None,description='Problem satement that service engineer found')
+    priority: Optional[str] = Field(default=None,description="priority must be low,medium,high")
+    excepted_complete_date: Optional[datetime] = Field(default=None,description="date that service engineer expect to complete")
+    spare_parts_required: Optional[bool] = Field(default=None,description="1 for spare part needed, 0 for spare paer dont needed")
+
+class SparePartBase(BaseModel):
+    ticket_id : int
+    
+
+class SparePartUpdate(BaseModel):
+    part_name : str
+    quantity : float
+
+class SparePartRequestResponse(SparePartBase):
+    service_engineer_username: str

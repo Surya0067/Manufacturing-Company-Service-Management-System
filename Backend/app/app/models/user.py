@@ -30,3 +30,5 @@ class User(Base):
         foreign_keys="[TicketAssign.service_engineer_id]",
         back_populates="service_engineer",
     )
+    ticket_process = relationship("TicketProcess", back_populates="user")
+    spare_part = relationship("SpareParts", back_populates="user")

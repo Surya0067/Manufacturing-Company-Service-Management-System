@@ -1,10 +1,10 @@
 from typing import Any, Dict, Optional, Union
-from sqlalchemy import func
+from sqlalchemy import func,distinct
 from sqlalchemy.orm import Session, aliased
 from fastapi import HTTPException
 from curd.customer import getCustomerByID
 from curd.user import getUserByID, getUserByusername
-from models import Ticket, TicketRejected, TicketAssign, User,Customer
+from models import Ticket, TicketRejected, TicketAssign, User, TicketProcess,SpareParts
 from schemas import *
 
 
@@ -54,7 +54,7 @@ def check_ticket_already_assigned(
     # If the ticket is not currently assigned
     if not db_ticket:
         if not ticket.is_taken:
-            return None  # Ticket can be assigned as it's not taken
+            return None  
         raise HTTPException(status_code=404, detail="Ticket has not been assigned yet")
 
     # If we are reassigning, check the ownership
@@ -133,52 +133,57 @@ def displaySpecficTicket(db: Session, ticket_id: int):
         )
 
 
-def assignedTickets(db: Session, username: str) :
+def assignedTickets(db: Session, username: str):
     service_engineer = getUserByusername(db=db, username=username)
     assigned_tickets = (
-        db.query(TicketAssign,Ticket)
+        db.query(TicketAssign, Ticket)
         .join(Ticket)
         .filter(TicketAssign.service_engineer_id == service_engineer.id)
         .order_by(TicketAssign.created_at.desc())
         .all()
     )
-    return DisplayAssignedTicket(assigned_tickets= assigned_tickets)
+    return DisplayAssignedTicket(assigned_tickets=assigned_tickets)
 
-def assignedTicket(db: Session, username: str, ticket_id : int):
+
+def assignedTicket(db: Session, username: str, ticket_id: int):
     service_engineer = getUserByusername(db=db, username=username)
     assigned_tickets = (
-        db.query(TicketAssign,Ticket)
+        db.query(TicketAssign, Ticket)
         .join(Ticket)
-        .filter(TicketAssign.service_engineer_id == service_engineer.id,TicketAssign.ticket_id==ticket_id)
+        .filter(
+            TicketAssign.service_engineer_id == service_engineer.id,
+            TicketAssign.ticket_id == ticket_id,
+        )
         .order_by(TicketAssign.created_at.desc())
         .all()
     )
-    return DisplayAssignedTicket(assigned_tickets= assigned_tickets)
+    return DisplayAssignedTicket(assigned_tickets=assigned_tickets)
 
 
-def DisplayAssignedTicket(assigned_tickets : List):
+def DisplayAssignedTicket(assigned_tickets: List):
     response_data = [
         AssignedTicketResponse(
             ticket=TicketAssignDisplay(
                 ticket_id=ticket_assign.ticket_id,
                 service_engineer_username=ticket_assign.service_engineer.username,
                 status=ticket_assign.status,
+                issue_description=ticket.issue_description,
                 assigned_by=ticket_assign.assigned_by.username,
                 assigned_date=ticket_assign.assigned_date,
-                created_date=ticket_assign.created_at
+                created_date=ticket_assign.created_at,
             ),
             customer=CustomerDisplay(
                 id=ticket.customer.id,
                 name=ticket.customer.name,
                 address=ticket.customer.address,
-                company_name=ticket.customer.company_name
-            )
+                # phone = ticket.customer.phone,
+                company_name=ticket.customer.company_name,
+            ),
         )
-        for ticket_assign,ticket in assigned_tickets
+        for ticket_assign, ticket in assigned_tickets
     ]
 
     return response_data
-
 
 
 def ticketUpdate(db: Session, ticket_update: TicketUpdate):
@@ -283,3 +288,102 @@ def releasingTickeAssign(db: Session, ticket_id: int):
         db.commit()
         db.refresh(db_assign)
         return dict(message="Ticket has been released")
+
+
+# =====================================================ticket process ===================================================
+
+
+def getTicketAssigned(db: Session,ticket_id):
+    ticket_assigned = (
+        db.query(TicketAssign)
+        .filter(
+            TicketAssign.ticket_id == ticket_id,
+        ).order_by(
+            TicketAssign.id.desc()
+        )
+        .first()
+    )
+    return ticket_assigned
+
+
+def getTicketProcessByTicketID(db: Session, ticket_id: int,service_engineer_id :int):
+    return db.query(TicketProcess).filter(TicketProcess.ticket_id == ticket_id,TicketProcess.service_engineer_id==service_engineer_id).first()
+
+
+def newTicketProcess(
+    db: Session, service_engineer_id: int, details: TicketprocessCreate
+):
+    ticket_assigned = getTicketAssigned(
+        db=db,ticket_id=details.ticket_id
+    )
+    if details.priority not in ["low", "medium", "high"]:
+        raise HTTPException(status_code=400, detail="Priority not matched")
+    db.add(
+        TicketProcess(
+            ticket_id=details.ticket_id,
+            service_engineer_id=service_engineer_id,
+            priority=details.priority,
+            problem_description = details.problem_description,
+            excepted_complete_date=details.excepted_complete_date,
+            spare_parts_required=details.spare_parts_required,
+        )
+    )
+    ticket_assigned.status = "on-progress"
+    db.commit()
+    db.refresh(ticket_assigned)
+    return dict(message="ticket process has been added")
+
+def updateProcess(db : Session,service_engineer_id: int, details: TicketProcessUpdate):
+    db_ticket_process = getTicketProcessByTicketID(
+        db=db, ticket_id=details.ticket_id,service_engineer_id=service_engineer_id
+    )
+    if details.problem_description:
+        db_ticket_process.problem_description = details.problem_description
+    if details.priority:
+        if details.priority not in ["low", "medium", "high"]:
+            raise HTTPException(status_code=400, detail="Priority not matched")
+        db_ticket_process.priority = details.priority
+    if details.excepted_complete_date:
+        db_ticket_process.excepted_complete_date = details.excepted_complete_date
+    if details.spare_parts_required:
+        db_ticket_process.spare_parts_required = details.spare_parts_required
+    db.commit()
+    db.refresh(db_ticket_process)
+    return dict(message = "process has been updated")
+
+def addsparePart(db: Session, spare_parts: List[SparePartUpdate], service_engineer_id: int, ticket_id: int):
+    db_ticket_process = getTicketProcessByTicketID(
+        db=db, ticket_id=ticket_id, service_engineer_id=service_engineer_id
+    )
+    
+    if not db_ticket_process:
+        raise HTTPException(status_code=403, detail="Ticket process not found for this service engineer.")
+
+    spare_parts_entries = [
+        SpareParts(
+            ticket_id=ticket_id,
+            part_name=spare_part.part_name,
+            quantity=spare_part.quantity,
+        )
+        for spare_part in spare_parts
+    ]
+    
+    db.add_all(spare_parts_entries) 
+    db.commit()  
+    return dict(message = "Spare parts added successfully")
+
+def get_service_engineers_under_head(db: Session, current_user: User):
+    return db.query(User).filter(User.report_to == current_user.id).all()
+
+def get_spare_part_requests(db: Session, service_engineer_ids: List[int]):
+    return (
+        db.query(distinct(SpareParts.ticket_id), TicketAssign.service_engineer_id, User.username)
+        .join(TicketAssign, SpareParts.ticket_id == TicketAssign.ticket_id)
+        .join(User, TicketAssign.service_engineer_id == User.id)
+        .filter(
+            TicketAssign.service_engineer_id.in_(service_engineer_ids),
+            SpareParts.status == 'pending'
+        )
+        .all()
+    )
+

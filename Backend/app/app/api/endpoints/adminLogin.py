@@ -46,34 +46,6 @@ async def getUsers(
 
 
 @router.get(
-    "/get-all-servicehead",
-    description="Admin can get the list of all service heads",
-    response_model=List[UserTeamMate],
-)
-async def getAllServiceHead(
-    db: Session = Depends(get_db), current_user: User = Depends(adminLogin)
-):
-    service_head = displayServiceHead(db=db)
-    if not service_head:
-        raise HTTPException(status_code=404, detail="No service heads found")
-    return service_head
-
-
-@router.get(
-    "/get-all-serviceEnginner",
-    description="Admin can get the list of all service engineer",
-    response_model=List[UserTeamMate],
-)
-async def getAllServiceEngineer(
-    db: Session = Depends(get_db), current_user: User = Depends(adminLogin)
-):
-    service_engineer = displayServiceEngineer(db=db)
-    if not service_engineer:
-        raise HTTPException(status_code=404, detail="No service engineer found")
-    return service_engineer
-
-
-@router.get(
     "/get-users/type-id/{type_id}",
     description="Only admin can get list of users by type ID",
     response_model=UsersDisplay,
@@ -96,7 +68,7 @@ async def getUserByUserTypeID(
 async def getUsername(
     username: str = Path(..., description="Username that user want to search"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
+    current_user: User = Depends(adminLogin),
 ):
     user = getUserByusername(db=db, username=username)
     if user:
@@ -135,7 +107,7 @@ async def updateUserPassword(
 async def updateUserReportTO(
     details: UserUpdateRepportTo,
     db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
+    current_user: User = Depends(adminLogin),
 ):
     user_name = getUserByusername(db=db, username=details.username)
     if not user_name:
@@ -156,15 +128,11 @@ async def updateUserReportTO(
 async def deleteUser(
     username: str = Path(..., description="username of the user to disable"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
+    current_user: User = Depends(adminLogin),
 ):
     user_name = getUserByusername(db=db, username=username)
     if not user_name:
         raise HTTPException(status_code=404, detail="user not found")
-    if (
-        current_user.type_id == 2 and user_name.type_id != 3
-    ) or current_user.type_id == 3:
-        raise HTTPException(status_code=400, detail="access declined")
     if user_name.is_active == False:
         raise HTTPException(status_code=400, detail="user Already disabled")
     user = disableUser(db=db, username=username)
@@ -179,15 +147,11 @@ async def deleteUser(
 async def reactiveUser(
     username: str = Path(..., description="username of the user to reactive"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
+    current_user: User = Depends(adminLogin),
 ):
     user_name = getUserByusername(db=db, username=username)
     if not user_name:
         raise HTTPException(status_code=404, detail="user not found")
-    if (
-        current_user.type_id == 2 and user_name.type_id != 3
-    ) or current_user.type_id == 3:
-        raise HTTPException(status_code=400, detail="access declined")
     if user_name.is_active == True:
         raise HTTPException(status_code=400, detail="user Already in use")
     user = reactiveUserByUsername(db=db, username=username)

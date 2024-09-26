@@ -17,3 +17,5 @@ class Ticket(Base):
     customer = relationship("Customer", back_populates="tickets")
     ticket_rejected = relationship("TicketRejected", back_populates="ticket")
     ticket_assign = relationship("TicketAssign", back_populates="ticket")
+    ticket_process = relationship("TicketProcess", back_populates="ticket")
+    spare_parts = relationship("SpareParts", back_populates="ticket")
