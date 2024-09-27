@@ -3,13 +3,13 @@ from reportlab.pdfgen import canvas
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Any, Dict, Optional, Union
-from sqlalchemy import func, distinct
+from sqlalchemy import func, distinct,extract
 from sqlalchemy.orm import Session, aliased
 from fastapi import HTTPException
 from curd.customer import getCustomerByID
 from curd.user import getUserByID, getUserByusername, userVaildation
 from curd.ticket import *
-from models import WorkReport, User
+from models import *
 from schemas import *
 
 
@@ -134,3 +134,65 @@ def generateTicketReportpdf(ticket_id: int, db: Session, file_path: str):
     c.save()
 
     return {"file_path": pdf_file_name, "message": "Report generated successfully"}
+
+
+def getAssignedTickets(service_head_id: int, db: Session, current_month: int, current_year: int):
+    service_engineer_alias = aliased(User)
+
+    return db.query(TicketProcess).select_from(TicketProcess).join(
+        TicketAssign, TicketProcess.ticket_id == TicketAssign.ticket_id
+    ).join(
+        service_engineer_alias, TicketAssign.service_engineer_id == service_engineer_alias.id
+    ).filter(
+        service_engineer_alias.report_to == service_head_id,
+        extract('month', TicketProcess.created_at) == current_month,
+        extract('year', TicketProcess.created_at) == current_year
+    ).all()
+
+
+def countCompletedTickets(service_head_id: int, db: Session, current_month: int, current_year: int):
+    service_engineer_alias = aliased(User)
+
+    return db.query(TicketProcess).select_from(TicketProcess).join(
+        TicketAssign, TicketProcess.ticket_id == TicketAssign.ticket_id
+    ).join(
+        service_engineer_alias, TicketAssign.service_engineer_id == service_engineer_alias.id
+    ).filter(
+        service_engineer_alias.report_to == service_head_id,
+        TicketProcess.status == "completed",
+        extract('month', TicketProcess.actual_complete_date) == current_month,
+        extract('year', TicketProcess.actual_complete_date) == current_year
+    ).count()
+
+
+def getTeamMemberCount(service_head_id: int, db: Session):
+    return db.query(User).filter(User.report_to == service_head_id).distinct(User.id).count()
+
+def countOnProgressTickets(service_head_id: int, db: Session):
+    service_engineer_alias = aliased(User)
+
+    return db.query(TicketProcess).select_from(TicketProcess).join(
+        TicketAssign, TicketProcess.ticket_id == TicketAssign.ticket_id
+    ).join(
+        service_engineer_alias, TicketAssign.service_engineer_id == service_engineer_alias.id
+    ).filter(
+        service_engineer_alias.report_to == service_head_id,
+        TicketProcess.status == "on-progress"
+    ).count()
+
+def getServiceEngineerPerformance(db: Session, username: str):
+    engineer = getUserByusername(db=db,username=username)
+    if not engineer:
+        return None
+    if  engineer.type_id !=3:
+        raise HTTPException(404,"this user is not an service engineer")
+    assigned_tickets = db.query(TicketAssign).filter(TicketAssign.service_engineer_id == engineer.id).count()
+    completed_tickets = db.query(TicketAssign).filter(TicketAssign.service_engineer_id == engineer.id, Ticket.status == 'completed').count()
+    return ServiceEngineerPerformanceResponse(
+        engineer_id=engineer.id,
+        name=engineer.username,
+        assigned_tickets=assigned_tickets,
+        completed_tickets=completed_tickets,
+        email=engineer.email,
+        phone_number=engineer.phone,
+    )

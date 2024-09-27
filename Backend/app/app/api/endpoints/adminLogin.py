@@ -3,13 +3,17 @@ from sqlalchemy.orm import Session
 from datetime import timedelta
 from typing import List
 
-from api.deps import get_db, getCurrentUser, adminLogin
+from api.deps import get_db,adminLogin
 from schemas import *
 from curd.user import *
 
 
 router = APIRouter()
 
+@router.get("/dashboard/data", response_model=DashboardDataResponse)
+async def get_dashboard_data_endpoint(db: Session = Depends(get_db),current_user : User = Depends(adminLogin)):
+    dashboard_data = get_dashboard_data(db)
+    return dashboard_data
 
 @router.post("/create-user", response_model=UserOut, description="Only admin can ")
 async def createNewUser(

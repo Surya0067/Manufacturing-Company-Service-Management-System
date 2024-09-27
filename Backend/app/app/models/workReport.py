@@ -13,3 +13,4 @@ class WorkReport(Base):
     report_date = Column(Date, nullable=False)
 
     user = relationship("User", back_populates="work_report")
+

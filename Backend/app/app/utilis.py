@@ -1,16 +1,8 @@
-from typing import Any, Dict, Optional, Union
-from sqlalchemy import func, distinct
-from sqlalchemy.orm import Session, aliased, defer
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 from fastapi import HTTPException, File, UploadFile
-from curd.customer import getCustomerByID
-from curd.user import getUserByID, getUserByusername
 from models import (
-    Ticket,
-    TicketRejected,
-    TicketAssign,
     User,
-    TicketProcess,
-    SpareParts,
     TravelExpenseReports,
 )
 from schemas import *
@@ -155,3 +147,4 @@ def approveOrRejectTravelExpensesInDb(
         "approved_expenses": approved_expenses,
         "rejected_expenses": rejected_expenses,
     }
+

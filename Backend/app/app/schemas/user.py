@@ -43,7 +43,6 @@ class UserUpdateRepportTo(UserUpdateBase):
     report_to: str
 
 
-# Output schemas for displaying user data
 class Message(BaseModel):
     message: str
 
@@ -78,3 +77,22 @@ class UserTeamMate(UserBase):
 
 class UserTeamMates(BaseModel):
     users: List[UserTeamMate]
+
+class ServiceHeadTrackingResponse(BaseModel):
+    service_head_id: int
+    service_head_name: str
+    service_head_phone: str
+    month: int
+    year: int
+    assigned_tickets: int
+    completed_tickets: int
+    team_members: int
+    on_progress_tickets: int
+
+class ServiceEngineerPerformanceResponse(BaseModel):
+    engineer_id: int
+    name: str
+    assigned_tickets: int
+    completed_tickets: int
+    email: str
+    phone_number: str
