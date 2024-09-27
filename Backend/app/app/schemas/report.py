@@ -53,6 +53,7 @@ class TravelExpenseReportResponse(BaseModel):
     class Config:
         orm_mode = True
 
+
 class DashboardDataResponse(BaseModel):
     total_tickets_current_month: int
     total_tickets_previous_month: int

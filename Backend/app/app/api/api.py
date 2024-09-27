@@ -10,7 +10,7 @@ from .endpoints import (
     serviceEngineer,
     ticketProcess,
     workReport,
-    expenses
+    expenses,
 )
 
 api_router = APIRouter()

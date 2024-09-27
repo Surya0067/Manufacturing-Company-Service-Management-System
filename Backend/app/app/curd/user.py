@@ -37,39 +37,55 @@ def userVaildation(db: Session, username: str, current_user: User):
 
     return user
 
+
 def get_dashboard_data(db: Session):
     current_month = datetime.now().month
     current_year = datetime.now().year
 
-    total_tickets_current_month = db.query(Ticket).filter(
-        func.extract('month', Ticket.created_at) == current_month,
-        func.extract('year', Ticket.created_at) == current_year
-    ).count()
+    total_tickets_current_month = (
+        db.query(Ticket)
+        .filter(
+            func.extract("month", Ticket.created_at) == current_month,
+            func.extract("year", Ticket.created_at) == current_year,
+        )
+        .count()
+    )
 
     previous_month = current_month - 1 if current_month > 1 else 12
     previous_year = current_year if current_month > 1 else current_year - 1
 
-    total_tickets_previous_month = db.query(Ticket).filter(
-        func.extract('month', Ticket.created_at) == previous_month,
-        func.extract('year', Ticket.created_at) == previous_year
-    ).count()
+    total_tickets_previous_month = (
+        db.query(Ticket)
+        .filter(
+            func.extract("month", Ticket.created_at) == previous_month,
+            func.extract("year", Ticket.created_at) == previous_year,
+        )
+        .count()
+    )
 
+    completed_tickets_current_month = (
+        db.query(TicketAssign)
+        .filter(
+            TicketAssign.status == "completed",
+            func.extract("month", TicketAssign.created_at) == current_month,
+            func.extract("year", TicketAssign.created_at) == current_year,
+        )
+        .count()
+    )
 
-    completed_tickets_current_month = db.query(TicketAssign).filter(
-        TicketAssign.status == 'completed',
-        func.extract('month', TicketAssign.created_at) == current_month,
-        func.extract('year', TicketAssign.created_at) == current_year
-    ).count()
+    completed_tickets_previous_month = (
+        db.query(Ticket)
+        .filter(
+            TicketAssign.status == "completed",
+            func.extract("month", TicketAssign.created_at) == previous_month,
+            func.extract("year", TicketAssign.created_at) == previous_year,
+        )
+        .count()
+    )
 
-    completed_tickets_previous_month = db.query(Ticket).filter(
-        TicketAssign.status == 'completed',
-        func.extract('month', TicketAssign.created_at) == previous_month,
-        func.extract('year', TicketAssign.created_at) == previous_year
-    ).count()
-
-    service_engineers_count = getEmployeecount(db=db,type_id=3)
-    service_heads_count = getEmployeecount(db=db,type_id=2)
-    admins_count = getEmployeecount(db=db,type_id=1)
+    service_engineers_count = getEmployeecount(db=db, type_id=3)
+    service_heads_count = getEmployeecount(db=db, type_id=2)
+    admins_count = getEmployeecount(db=db, type_id=1)
 
     return DashboardDataResponse(
         total_tickets_current_month=total_tickets_current_month,
@@ -80,6 +96,7 @@ def get_dashboard_data(db: Session):
         service_heads_count=service_heads_count,
         admins_count=admins_count,
     )
+
 
 def getAllUser(db: Session):
     report_to_alias = aliased(User)

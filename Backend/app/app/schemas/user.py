@@ -78,6 +78,7 @@ class UserTeamMate(UserBase):
 class UserTeamMates(BaseModel):
     users: List[UserTeamMate]
 
+
 class ServiceHeadTrackingResponse(BaseModel):
     service_head_id: int
     service_head_name: str
@@ -88,6 +89,7 @@ class ServiceHeadTrackingResponse(BaseModel):
     completed_tickets: int
     team_members: int
     on_progress_tickets: int
+
 
 class ServiceEngineerPerformanceResponse(BaseModel):
     engineer_id: int

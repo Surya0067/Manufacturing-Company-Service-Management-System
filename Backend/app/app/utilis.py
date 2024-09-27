@@ -147,4 +147,3 @@ def approveOrRejectTravelExpensesInDb(
         "approved_expenses": approved_expenses,
         "rejected_expenses": rejected_expenses,
     }
-

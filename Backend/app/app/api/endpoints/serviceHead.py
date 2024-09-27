@@ -146,17 +146,26 @@ async def updateUserPassword(
         raise HTTPException(status_code=400, detail="Service engineer not under you")
     raise HTTPException(status_code=404, detail="Service engineer not found")
 
-@router.post("/update-labour-cost",description="We can update the labour cost after the completion of ticket process",response_model=Message)
-async def addLabourCost(details : TicketLabourCost ,db : Session = Depends(get_db),current_user : User = Depends(serviceHeadLogin)):
+
+@router.post(
+    "/update-labour-cost",
+    description="We can update the labour cost after the completion of ticket process",
+    response_model=Message,
+)
+async def addLabourCost(
+    details: TicketLabourCost,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(serviceHeadLogin),
+):
     ticket_process = getTicketProcess(db=db, ticket_id=details.ticket_id)
     if not ticket_process:
-        raise HTTPException(404,"ticket is not in ticket process")
-    if not ticket_process.status in ["completed","cancelled"]:
-        raise HTTPException(400,"ticket id either in process or cancelled")
+        raise HTTPException(404, "ticket is not in ticket process")
+    if not ticket_process.status in ["completed", "cancelled"]:
+        raise HTTPException(400, "ticket id either in process or cancelled")
     if current_user.id != ticket_process.user.report_to:
-        raise HTTPException(400,"this ticket is under some other service head")
-    if  ticket_process.labour_cost:
-        raise HTTPException(409,"labour cost already added")
-    labour_cost = addLabourCost(db=db,details=details)
+        raise HTTPException(400, "this ticket is under some other service head")
+    if ticket_process.labour_cost:
+        raise HTTPException(409, "labour cost already added")
+    labour_cost = addLabourCost(db=db, details=details)
     if labour_cost:
         return labour_cost
