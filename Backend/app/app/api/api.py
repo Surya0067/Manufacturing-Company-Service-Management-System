@@ -9,6 +9,7 @@ from .endpoints import (
     serviceEngineer,
     ticketProcess,
     workReport,
+    expenses,
 )
 
 api_router = APIRouter()
@@ -33,4 +34,7 @@ api_router.include_router(
 )
 api_router.include_router(
     workReport.router, prefix="/work-report", tags=["Work report"]
+)
+api_router.include_router(
+    expenses.router, prefix="/expenses-report", tags=["Expenses report"]
 )

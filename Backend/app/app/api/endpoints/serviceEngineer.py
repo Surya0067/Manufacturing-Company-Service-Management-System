@@ -9,7 +9,7 @@ from curd.ticket import *
 from api.deps import get_db, getCurrentUser
 from models import User
 from schemas import *
-from utilis import *
+
 
 router = APIRouter()
 
@@ -44,40 +44,3 @@ async def displayAllAssignedTicket(
     if assigned_ticket:
         return assigned_ticket
     raise HTTPException(status_code=404, detail="ticket may be not assigned for you")
-
-
-@router.post("/request-travel-expenses/{ticket_id}")
-async def request_travel_expenses(
-    ticket_id: int,
-    expense_data: TravelExpenseReportCreate,
-    image: UploadFile = File(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(getCurrentUser),
-):
-    ticket = getTicketProcessByTicketID(
-        db=db, service_engineer_id=current_user.id, ticket_id=ticket_id
-    )
-    if not ticket:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-    if ticket.service_engineer_id != current_user.id:
-        raise HTTPException(
-            status_code=403, detail="This ticket is not assigned to you"
-        )
-
-    if ticket.status not in ["completed", "cancelled"]:
-        raise HTTPException(status_code=400, detail="Ticket is still under process")
-    image_path = saveUploadedFile(image)
-
-    new_expense_report = createTravelExpenseReport(
-        db=db,
-        service_engineer_id=current_user.id,
-        ticket_id=ticket_id,
-        expense_details=expense_data.expense_details,
-        total_amount=expense_data.total_amount,
-        image_path=image_path,
-    )
-
-    return {
-        "msg": "Travel expense report created successfully",
-        "expense_report": new_expense_report,
-    }

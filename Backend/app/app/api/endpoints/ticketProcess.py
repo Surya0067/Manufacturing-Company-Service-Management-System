@@ -152,7 +152,7 @@ async def listSparePartsForTicket(
 
     ticket_assign = getTicketAssignment(db, ticket_id)
     if (
-        current_user.user_type.role == "service_engineer"
+        current_user.user_type == 3
         and ticket_assign.service_engineer_id != current_user.id
     ):
         raise HTTPException(

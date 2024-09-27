@@ -36,10 +36,7 @@ async def createNewTicket(
 async def getAllTickets(
     db: Session = Depends(get_db), current_user: User = Depends(serviceHeadLogin)
 ):
-    if current_user.type_id == 3:
-        raise HTTPException(status_code=400, detail="Access Declined")
     tickets = displayTickets(db=db)
-    print(tickets)
     if tickets:
         return tickets
     raise HTTPException(status_code=404, detail="No tickets found")

@@ -365,12 +365,15 @@ def addsparePart(
             status_code=403,
             detail="Ticket process not found for this service engineer.",
         )
+    if not db_ticket_process.status == "on-progress":
+        raise HTTPException(400, "Ticket is not under progress")
 
     spare_parts_entries = [
         SpareParts(
             ticket_id=ticket_id,
             part_name=spare_part.part_name,
             quantity=spare_part.quantity,
+            unit_price=spare_part.unit_price,
         )
         for spare_part in spare_parts
     ]
@@ -401,7 +404,10 @@ def getSparePartRequests(db: Session, service_engineer_ids: List[int] = None):
 
 def getTicketAssignment(db: Session, ticket_id: int):
     ticket_assign = (
-        db.query(TicketAssign).filter(TicketAssign.ticket_id == ticket_id).first()
+        db.query(TicketAssign)
+        .filter(TicketAssign.ticket_id == ticket_id)
+        .order_by(TicketAssign.id.desc())
+        .first()
     )
     if not ticket_assign:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -414,7 +420,8 @@ def getServiceEngineer(db: Session, service_engineer_id: int, service_head_id: i
         .filter(User.id == service_engineer_id, User.report_to == service_head_id)
         .first()
     )
-
+    print(service_engineer_id)
+    print(service_head_id)
     if not service_engineer:
         raise HTTPException(
             status_code=403, detail="This ticket is under another service head"

@@ -129,6 +129,7 @@ class SparePartBase(BaseModel):
 class SparePartUpdate(BaseModel):
     part_name: str
     quantity: float
+    unit_price: float
 
 
 class SparePartRequestResponse(SparePartBase):
