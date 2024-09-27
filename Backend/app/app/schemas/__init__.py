@@ -3,3 +3,4 @@ from .user import *
 from .userType import *
 from .customer import *
 from .ticket import *
+from .report import *

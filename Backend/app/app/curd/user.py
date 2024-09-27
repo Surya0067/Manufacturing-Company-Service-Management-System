@@ -25,6 +25,15 @@ def getUserByPhone(db: Session, phone: str):
 def getEmployeecount(db: Session, type_id: int):
     return db.query(User).filter(User.type_id == type_id).count()
 
+def userVaildation(db : Session,username : str,current_user : User):
+    user = getUserByusername(db=db, username=username)
+    if not user:
+        raise HTTPException(404, "User not found")
+    
+    if not current_user.type_id == 1 and user.report_to != current_user.id:
+        raise HTTPException(403, "Access denied")
+    
+    return user
 
 def getAllUser(db: Session):
     report_to_alias = aliased(User)

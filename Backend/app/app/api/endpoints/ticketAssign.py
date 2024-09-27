@@ -6,7 +6,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from curd.ticket import *
-from api.deps import get_db,serviceHeadLogin
+from api.deps import get_db, serviceHeadLogin
 from models import User
 from schemas import *
 

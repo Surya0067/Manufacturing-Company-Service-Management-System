@@ -5,4 +5,6 @@ from .ticket import Ticket
 from .ticketRejected import TicketRejected
 from .ticketAssigned import TicketAssign
 from .ticketProcess import TicketProcess
-from.spareParts import SpareParts
+from .spareParts import SpareParts
+from .workReport import WorkReport
+from .TravelExpenseReports import TravelExpenseReports

@@ -94,26 +94,46 @@ class TicketProcessBase(BaseModel):
 
 
 class TicketprocessCreate(TicketProcessBase):
-    problem_description : str =Field(...,description='Problem satement that service engineer found')
-    priority: str = Field(...,description="priority must be low,medium,high")
-    excepted_complete_date: datetime = Field(...,description="date that service engineer expect to complete")
-    spare_parts_required: bool = Field(...,description="1 for spare part needed, 0 for spare paer dont needed")
+    problem_description: str = Field(
+        ..., description="Problem satement that service engineer found"
+    )
+    priority: str = Field(..., description="priority must be low,medium,high")
+    excepted_complete_date: datetime = Field(
+        ..., description="date that service engineer expect to complete"
+    )
+    spare_parts_required: bool = Field(
+        ..., description="1 for spare part needed, 0 for spare paer dont needed"
+    )
+
 
 class TicketProcessUpdate(TicketProcessBase):
-    problem_description : Optional[str] = Field(default=None,description='Problem satement that service engineer found')
-    priority: Optional[str] = Field(default=None,description="priority must be low,medium,high")
-    excepted_complete_date: Optional[datetime] = Field(default=None,description="date that service engineer expect to complete")
-    spare_parts_required: Optional[bool] = Field(default=None,description="1 for spare part needed, 0 for spare paer dont needed")
+    problem_description: Optional[str] = Field(
+        default=None, description="Problem satement that service engineer found"
+    )
+    priority: Optional[str] = Field(
+        default=None, description="priority must be low,medium,high"
+    )
+    excepted_complete_date: Optional[datetime] = Field(
+        default=None, description="date that service engineer expect to complete"
+    )
+    spare_parts_required: Optional[bool] = Field(
+        default=None,
+        description="1 for spare part needed, 0 for spare paer dont needed",
+    )
+
 
 class SparePartBase(BaseModel):
     ticket_id: int
+
 
 class SparePartUpdate(BaseModel):
     part_name: str
     quantity: float
 
+
 class SparePartRequestResponse(SparePartBase):
     service_engineer_username: str
+
 
 class SparePartResponse(BaseModel):
     id: int
@@ -124,10 +144,12 @@ class SparePartResponse(BaseModel):
     class Config:
         orm_mode = True
 
+
 class SparePartsBulkActionResponse(BaseModel):
     message: str
     approved_parts: list[int]
     rejected_parts: list[int]
 
+
 class TicketProcessChangeStatus(TicketProcessBase):
-    status : str
+    status: str

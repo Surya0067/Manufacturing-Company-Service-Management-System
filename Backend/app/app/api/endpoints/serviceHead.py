@@ -145,4 +145,3 @@ async def updateUserPassword(
                 return user
         raise HTTPException(status_code=400, detail="Service engineer not under you")
     raise HTTPException(status_code=404, detail="Service engineer not found")
-
