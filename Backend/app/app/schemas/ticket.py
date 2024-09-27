@@ -154,3 +154,6 @@ class SparePartsBulkActionResponse(BaseModel):
 
 class TicketProcessChangeStatus(TicketProcessBase):
     status: str
+
+class TicketLabourCost(TicketProcessBase):
+    labour_cost : float

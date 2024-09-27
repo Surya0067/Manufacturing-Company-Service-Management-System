@@ -23,7 +23,7 @@ class TicketProcess(Base):
     excepted_complete_date = Column(DateTime, nullable=False)
     actual_complete_date = Column(DateTime, nullable=True)
     spare_parts_required = Column(Boolean, nullable=False)
-    cost = Column(Float, nullable=True)
+    labour_cost = Column(Float, nullable=True)
     status = Column(String(50), nullable=False, default="on-progress")
     created_at = Column(DateTime, default=func.now())
 

@@ -9,3 +9,4 @@ passlib
 pydantic_settings
 pymysql
 pytz
+reportlab

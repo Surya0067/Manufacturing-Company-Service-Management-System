@@ -304,7 +304,14 @@ def getTicketProcessByTicketID(db: Session, ticket_id: int, service_engineer_id:
         )
         .first()
     )
-
+def getTicketProcess(db : Session,ticket_id : int):
+    return (
+        db.query(TicketProcess)
+        .filter(
+            TicketProcess.ticket_id == ticket_id
+        )
+        .first()
+    )
 
 def newTicketProcess(
     db: Session, service_engineer_id: int, details: TicketprocessCreate
@@ -502,7 +509,14 @@ def statusTicketInDb(db: Session, ticket_id: int, status: str):
         ticket_assign.status = status
         db.commit()
         db.refresh(ticket_process)
-        return {"message": "Ticket completed successfully"}
+        return {"message": "Ticket status changed successfully"}
     raise HTTPException(
         status_code=403, detail="You do not have permission to complete this ticket."
     )
+
+def addLabourCost(db: Session,details : TicketLabourCost):
+    db_assigned_ticket = getTicketProcess(db=db,ticket_id=details.ticket_id)
+    db_assigned_ticket.labour_cost = details.labour_cost
+    db.commit()
+    db.refresh(db_assigned_ticket)
+    return dict(message = "labour cost added")

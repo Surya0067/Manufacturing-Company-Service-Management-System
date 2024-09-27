@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from .endpoints import (
+    adminReports,
     login,
     serviceHead,
     ticketManagement,
@@ -9,7 +10,7 @@ from .endpoints import (
     serviceEngineer,
     ticketProcess,
     workReport,
-    expenses,
+    expenses
 )
 
 api_router = APIRouter()
@@ -37,4 +38,7 @@ api_router.include_router(
 )
 api_router.include_router(
     expenses.router, prefix="/expenses-report", tags=["Expenses report"]
+)
+api_router.include_router(
+    adminReports.router, prefix="/admin-report", tags=["admin report"]
 )
