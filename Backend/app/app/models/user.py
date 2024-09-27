@@ -33,5 +33,13 @@ class User(Base):
     ticket_process = relationship("TicketProcess", back_populates="user")
     spare_part = relationship("SpareParts", back_populates="user")
     work_report = relationship("WorkReport", back_populates="user")
-    travel_expenses = relationship("TravelExpenseReports", foreign_keys="[TravelExpenseReports.service_engineer_ID]", back_populates="service_engineer")
-    approved_expenses = relationship("TravelExpenseReports", foreign_keys="[TravelExpenseReports.status_by]", back_populates="status_changer")
+    travel_expenses = relationship(
+        "TravelExpenseReports",
+        foreign_keys="[TravelExpenseReports.service_engineer_ID]",
+        back_populates="service_engineer",
+    )
+    approved_expenses = relationship(
+        "TravelExpenseReports",
+        foreign_keys="[TravelExpenseReports.status_by]",
+        back_populates="status_changer",
+    )

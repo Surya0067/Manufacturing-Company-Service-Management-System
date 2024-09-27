@@ -14,12 +14,13 @@ class WorkReportCreate(WorkReportBase):
 
 
 class WorkReportDisplay(WorkReportBase):
-    id : int
-    user_id : int
-    created_at : int
+    id: int
+    user_id: int
+    created_at: int
+
 
 class WorkReportForSpecificDate(BaseModel):
-    start_date : date
+    start_date: date
     ending_date: date
 
 
